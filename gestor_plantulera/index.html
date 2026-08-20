@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#F3E4E1">
   <title>La Plantulera | Gestor</title>
-  <link rel="stylesheet" href="css/estilos.css?v=0.2.0">
+  <link rel="stylesheet" href="css/estilos.css?v=0.3.0">
 </head>
 <body>
   <main class="app-shell">
@@ -110,7 +110,7 @@
             <span class="module-icon">📷</span>
             <h3>Fotografías</h3>
             <p>Cámara, galería y optimización.</p>
-            <span class="tag">Próximamente v0.3</span>
+            <span class="tag tag-ready">Disponible v0.3</span>
           </article>
           <article class="module-card">
             <span class="module-icon">👀</span>
@@ -148,7 +148,7 @@
           <div>
             <p class="eyebrow">FLUJO DE TRABAJO</p>
             <h2>Guardar → Revisar → Publicar</h2>
-            <p class="muted">En v0.2 los productos se guardan como borradores. La publicación explícita llegará en v0.4.</p>
+            <p class="muted">En v0.3 los productos se guardan como borradores y ya pueden llevar foto optimizada. La publicación explícita llegará en v0.4.</p>
           </div>
           <button class="btn btn-primary" type="button" disabled>Publicar catálogo</button>
         </section>
@@ -282,9 +282,33 @@
             </label>
           </div>
 
-          <div class="notice-box">
-            <strong>Fotos:</strong> en v0.3 activaremos cámara, galería y optimización WebP. Por ahora este formulario guarda únicamente la información del producto.
-          </div>
+          <section class="image-uploader" aria-labelledby="tituloFotoProducto">
+            <div class="image-uploader-head">
+              <div>
+                <p class="eyebrow">FOTOGRAFÍA</p>
+                <h3 id="tituloFotoProducto">Foto principal</h3>
+                <p class="muted">Puedes tomar una foto con el celular o elegirla desde la galería. El gestor la optimiza a WebP antes de subirla.</p>
+              </div>
+            </div>
+
+            <div class="image-uploader-grid">
+              <div id="productoImagenPreview" class="image-preview empty" aria-live="polite">
+                <span id="productoImagenPlaceholder">Sin foto</span>
+                <img id="productoImagenImg" class="hidden" alt="Vista previa de la foto principal del producto">
+              </div>
+
+              <div class="image-controls">
+                <input id="productoImagenCamara" class="file-input-hidden" type="file" accept="image/*" capture="environment">
+                <input id="productoImagenGaleria" class="file-input-hidden" type="file" accept="image/*">
+
+                <button id="btnTomarFoto" class="btn btn-secondary" type="button">📷 Tomar foto</button>
+                <button id="btnElegirFoto" class="btn btn-secondary" type="button">🖼️ Elegir de galería</button>
+                <button id="btnQuitarFoto" class="btn btn-link hidden" type="button">Quitar foto</button>
+                <p class="field-help">Máximo recomendado: 10 MB. La imagen se reduce a un máximo de 1600 px sin ampliarla y se guarda en WebP.</p>
+                <p id="mensajeImagenProducto" class="status" role="status" aria-live="polite"></p>
+              </div>
+            </div>
+          </section>
 
           <div class="editor-actions">
             <button class="btn btn-secondary" type="button" data-cerrar-editor>Cancelar</button>
@@ -297,7 +321,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=0.2.0"></script>
-  <script src="js/app.js?v=0.2.0"></script>
+  <script src="js/config.js?v=0.3.0"></script>
+  <script src="js/app.js?v=0.3.0"></script>
 </body>
 </html>

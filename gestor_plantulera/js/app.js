@@ -28,6 +28,10 @@
   let productosCache = [];
   let slugCategoriaManual = false;
   let slugProductoManual = false;
+  let imagenProductoBlob = null;
+  let imagenProductoPreviewUrl = '';
+  let imagenProductoOriginalUrl = null;
+  let quitarImagenProducto = false;
 
   function setStatus(el, texto, tipo = '') {
     if (!el) return;
@@ -121,6 +125,166 @@
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#039;');
+  }
+
+
+  function crearUuid() {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  function formatoBytes(bytes) {
+    const n = Number(bytes || 0);
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+    return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function rutaStorageDesdeUrl(url) {
+    if (!url) return null;
+    const marker = '/storage/v1/object/public/catalog-media/';
+    const index = String(url).indexOf(marker);
+    if (index === -1) return null;
+    const path = String(url).slice(index + marker.length).split('?')[0];
+    try { return decodeURIComponent(path); } catch { return path; }
+  }
+
+  function revocarPreviewTemporal() {
+    if (imagenProductoPreviewUrl) {
+      URL.revokeObjectURL(imagenProductoPreviewUrl);
+      imagenProductoPreviewUrl = '';
+    }
+  }
+
+  function pintarPreviewImagenProducto(url = '') {
+    const contenedor = $('productoImagenPreview');
+    const img = $('productoImagenImg');
+    const placeholder = $('productoImagenPlaceholder');
+    const visibleUrl = url || (!quitarImagenProducto ? imagenProductoOriginalUrl : '');
+
+    if (visibleUrl) {
+      img.src = visibleUrl;
+      img.classList.remove('hidden');
+      placeholder.classList.add('hidden');
+      contenedor.classList.remove('empty');
+      $('btnQuitarFoto').classList.remove('hidden');
+    } else {
+      img.removeAttribute('src');
+      img.classList.add('hidden');
+      placeholder.classList.remove('hidden');
+      contenedor.classList.add('empty');
+      $('btnQuitarFoto').classList.add('hidden');
+    }
+  }
+
+  async function cargarImagenEnElemento(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = new Image();
+      img.decoding = 'async';
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = url;
+      });
+      return { source: img, width: img.naturalWidth, height: img.naturalHeight, cleanup: () => URL.revokeObjectURL(url) };
+    } catch (error) {
+      URL.revokeObjectURL(url);
+      throw error;
+    }
+  }
+
+  async function optimizarImagen(file) {
+    if (!file || !String(file.type || '').startsWith('image/')) {
+      throw new Error('Selecciona un archivo de imagen válido.');
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error('La imagen supera el límite de 10 MB.');
+    }
+
+    let source;
+    let width;
+    let height;
+    let cleanup = () => {};
+
+    try {
+      if ('createImageBitmap' in window) {
+        source = await createImageBitmap(file, { imageOrientation: 'from-image' });
+        width = source.width;
+        height = source.height;
+        cleanup = () => source.close?.();
+      } else {
+        const fallback = await cargarImagenEnElemento(file);
+        source = fallback.source;
+        width = fallback.width;
+        height = fallback.height;
+        cleanup = fallback.cleanup;
+      }
+
+      const maxSide = 1600;
+      const scale = Math.min(1, maxSide / Math.max(width, height));
+      const targetWidth = Math.max(1, Math.round(width * scale));
+      const targetHeight = Math.max(1, Math.round(height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (!ctx) throw new Error('Tu navegador no pudo preparar la imagen.');
+      ctx.drawImage(source, 0, 0, targetWidth, targetHeight);
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((result) => result ? resolve(result) : reject(new Error('No se pudo convertir la imagen a WebP.')), 'image/webp', 0.82);
+      });
+
+      return { blob, width: targetWidth, height: targetHeight };
+    } finally {
+      cleanup();
+    }
+  }
+
+  async function seleccionarImagenProducto(file) {
+    if (!file) return;
+    setStatus($('mensajeImagenProducto'), 'Optimizando imagen...');
+    try {
+      const originalSize = file.size;
+      const optimizada = await optimizarImagen(file);
+      revocarPreviewTemporal();
+      imagenProductoBlob = optimizada.blob;
+      imagenProductoPreviewUrl = URL.createObjectURL(optimizada.blob);
+      quitarImagenProducto = false;
+      pintarPreviewImagenProducto(imagenProductoPreviewUrl);
+      setStatus(
+        $('mensajeImagenProducto'),
+        `Lista: ${optimizada.width}×${optimizada.height}px · ${formatoBytes(originalSize)} → ${formatoBytes(optimizada.blob.size)}`,
+        'success'
+      );
+    } catch (error) {
+      setStatus($('mensajeImagenProducto'), mensajeError(error), 'error');
+    }
+  }
+
+  async function subirImagenProducto(productId, blob) {
+    const fileName = `cover-${Date.now()}-${crearUuid().slice(0, 8)}.webp`;
+    const path = `products/${productId}/${fileName}`;
+    const { error } = await client.storage.from('catalog-media').upload(path, blob, {
+      contentType: 'image/webp',
+      cacheControl: '3600',
+      upsert: false
+    });
+    if (error) throw error;
+    const { data } = client.storage.from('catalog-media').getPublicUrl(path);
+    return { path, publicUrl: data.publicUrl };
+  }
+
+  async function borrarImagenStorage(url) {
+    const path = rutaStorageDesdeUrl(url);
+    if (!path) return;
+    const { error } = await client.storage.from('catalog-media').remove([path]);
+    if (error) console.warn('No se pudo borrar la imagen anterior:', error.message);
   }
 
   async function verificarAdmin(user) {
@@ -318,15 +482,20 @@
 
     contenedor.innerHTML = productosCache.map((prod) => `
       <article class="data-card">
-        <div>
-          <h3>${escapeHtml(prod.name)}</h3>
-          <div class="muted">${escapeHtml(prod.short_description || 'Sin descripción corta')}</div>
-          <div class="data-meta">
+        <div class="product-card-media">
+          ${prod.cover_image_url
+            ? `<img class="product-thumb" src="${escapeHtml(prod.cover_image_url)}" alt="" loading="lazy">`
+            : '<div class="product-thumb-placeholder" aria-hidden="true">🎨</div>'}
+          <div>
+            <h3>${escapeHtml(prod.name)}</h3>
+            <div class="muted">${escapeHtml(prod.short_description || 'Sin descripción corta')}</div>
+            <div class="data-meta">
             <span class="pill">${escapeHtml(nombreCategoria(prod.category_id))}</span>
             <span class="pill">${escapeHtml(textoDisponibilidad(prod.availability_status))}</span>
             <span class="pill status-${escapeHtml(prod.publication_status)}">${escapeHtml(textoPublicacion(prod.publication_status))}</span>
             ${prod.featured ? '<span class="pill">Destacado</span>' : ''}
-            ${prod.plantilocura ? '<span class="pill">Plantilocura</span>' : ''}
+              ${prod.plantilocura ? '<span class="pill">Plantilocura</span>' : ''}
+            </div>
           </div>
         </div>
         <div class="card-actions">
@@ -379,6 +548,14 @@
     $('productoDisponibilidad').value = prod?.availability_status || 'por_encargo';
     $('productoDestacado').checked = Boolean(prod?.featured);
     $('productoPlantilocura').checked = Boolean(prod?.plantilocura);
+    $('productoImagenCamara').value = '';
+    $('productoImagenGaleria').value = '';
+    revocarPreviewTemporal();
+    imagenProductoBlob = null;
+    imagenProductoOriginalUrl = prod?.cover_image_url || null;
+    quitarImagenProducto = false;
+    pintarPreviewImagenProducto();
+    setStatus($('mensajeImagenProducto'), imagenProductoOriginalUrl ? 'Foto actual cargada.' : '');
     llenarSelectCategorias(prod?.category_id || '');
     $('tituloProducto').textContent = prod ? 'Editar producto' : 'Nuevo producto';
     slugProductoManual = Boolean(prod);
@@ -390,15 +567,16 @@
     event.preventDefault();
     if (!currentSession?.user) return;
 
-    const id = $('productoId').value;
+    const idActual = $('productoId').value;
     const precioTexto = $('productoPrecio').value.trim();
-    const prodExistente = productosCache.find((item) => item.id === id);
+    const prodExistente = productosCache.find((item) => item.id === idActual);
 
     if (prodExistente?.publication_status === 'published') {
-      setStatus($('mensajeFormProducto'), 'Este producto ya está publicado y no puede editarse desde v0.2.', 'error');
+      setStatus($('mensajeFormProducto'), 'Este producto ya está publicado y no puede editarse desde v0.3.', 'error');
       return;
     }
 
+    const productId = idActual || crearUuid();
     const payload = {
       category_id: $('productoCategoria').value,
       name: $('productoNombre').value.trim(),
@@ -423,30 +601,53 @@
       return;
     }
 
-    if (!id) {
+    if (!idActual) {
+      payload.id = productId;
       payload.publication_status = 'draft';
       payload.created_by = currentSession.user.id;
     }
 
     $('btnGuardarProducto').disabled = true;
-    setStatus($('mensajeFormProducto'), 'Guardando borrador...');
+    setStatus($('mensajeFormProducto'), imagenProductoBlob ? 'Subiendo foto optimizada...' : 'Guardando borrador...');
 
-    const query = id
-      ? client.from('products').update(payload).eq('id', id)
-      : client.from('products').insert(payload);
+    let nuevaImagen = null;
+    const imagenAnterior = prodExistente?.cover_image_url || null;
 
-    const { error } = await query;
-    $('btnGuardarProducto').disabled = false;
+    try {
+      if (imagenProductoBlob) {
+        nuevaImagen = await subirImagenProducto(productId, imagenProductoBlob);
+        payload.cover_image_url = nuevaImagen.publicUrl;
+      } else if (quitarImagenProducto) {
+        payload.cover_image_url = null;
+      }
 
-    if (error) {
+      const query = idActual
+        ? client.from('products').update(payload).eq('id', idActual)
+        : client.from('products').insert(payload);
+
+      const { error } = await query;
+      if (error) throw error;
+
+      if ((nuevaImagen || quitarImagenProducto) && imagenAnterior) {
+        await borrarImagenStorage(imagenAnterior);
+      }
+
+      revocarPreviewTemporal();
+      imagenProductoBlob = null;
+      imagenProductoOriginalUrl = null;
+      quitarImagenProducto = false;
+      cerrarEditores();
+      await cargarProductos();
+      await cargarResumen();
+      setStatus($('mensajeProductos'), idActual ? 'Producto actualizado.' : 'Producto guardado como borrador.', 'success');
+    } catch (error) {
+      if (nuevaImagen?.path) {
+        await client.storage.from('catalog-media').remove([nuevaImagen.path]);
+      }
       setStatus($('mensajeFormProducto'), mensajeError(error), 'error');
-      return;
+    } finally {
+      $('btnGuardarProducto').disabled = false;
     }
-
-    cerrarEditores();
-    await cargarProductos();
-    await cargarResumen();
-    setStatus($('mensajeProductos'), id ? 'Producto actualizado.' : 'Producto guardado como borrador.', 'success');
   }
 
   function abrirEditor(panel) {
@@ -456,6 +657,10 @@
   }
 
   function cerrarEditores() {
+    revocarPreviewTemporal();
+    imagenProductoBlob = null;
+    imagenProductoOriginalUrl = null;
+    quitarImagenProducto = false;
     [$('panelCategoria'), $('panelProducto')].forEach((panel) => {
       panel.classList.add('hidden');
       panel.setAttribute('aria-hidden', 'true');
@@ -548,6 +753,23 @@
   $('btnNuevoProducto').addEventListener('click', () => abrirProducto());
   $('formCategoria').addEventListener('submit', guardarCategoria);
   $('formProducto').addEventListener('submit', guardarProducto);
+  $('btnTomarFoto').addEventListener('click', () => $('productoImagenCamara').click());
+  $('btnElegirFoto').addEventListener('click', () => $('productoImagenGaleria').click());
+  $('productoImagenCamara').addEventListener('change', (event) => seleccionarImagenProducto(event.target.files?.[0]));
+  $('productoImagenGaleria').addEventListener('change', (event) => seleccionarImagenProducto(event.target.files?.[0]));
+  $('btnQuitarFoto').addEventListener('click', () => {
+    revocarPreviewTemporal();
+    imagenProductoBlob = null;
+    quitarImagenProducto = Boolean(imagenProductoOriginalUrl);
+    $('productoImagenCamara').value = '';
+    $('productoImagenGaleria').value = '';
+    pintarPreviewImagenProducto('');
+    setStatus(
+      $('mensajeImagenProducto'),
+      quitarImagenProducto ? 'La foto se quitará cuando guardes el producto.' : 'Foto seleccionada eliminada.',
+      ''
+    );
+  });
 
   $('categoriaNombre').addEventListener('input', () => {
     if (!slugCategoriaManual) $('categoriaSlug').value = slugify($('categoriaNombre').value);

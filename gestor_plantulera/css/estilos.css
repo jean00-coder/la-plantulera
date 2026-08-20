@@ -166,3 +166,24 @@ input:not([type="checkbox"]):focus, textarea:focus, select:focus {
   .editor-card { margin: 1vh 0; padding: 18px; border-radius: 20px; }
   .editor-actions { display: grid; grid-template-columns: 1fr 1fr; }
 }
+
+.image-uploader { margin-top: 18px; padding: 18px; border: 1px solid var(--borde); border-radius: 18px; background: rgba(243,228,225,.28); }
+.image-uploader-head h3 { margin-bottom: 6px; }
+.image-uploader-head .muted { margin: 0; }
+.image-uploader-grid { display: grid; grid-template-columns: minmax(180px, 280px) minmax(0, 1fr); gap: 18px; align-items: center; margin-top: 16px; }
+.image-preview { aspect-ratio: 1 / 1; width: 100%; overflow: hidden; border: 1px dashed rgba(119,68,111,.32); border-radius: 18px; display: grid; place-items: center; background: rgba(255,255,255,.78); color: #84777e; }
+.image-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.image-preview:not(.empty) { border-style: solid; }
+.image-controls { display: flex; flex-direction: column; align-items: stretch; gap: 8px; min-width: 0; }
+.image-controls .btn { width: 100%; }
+.image-controls .btn-link { width: auto; align-self: flex-start; padding: 6px 0; }
+.file-input-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
+.product-card-media { display: grid; grid-template-columns: 76px minmax(0,1fr); gap: 14px; align-items: center; min-width: 0; }
+.product-thumb { width: 76px; height: 76px; border-radius: 16px; object-fit: cover; border: 1px solid var(--borde); background: var(--rosa); }
+.product-thumb-placeholder { width: 76px; height: 76px; border-radius: 16px; display: grid; place-items: center; border: 1px dashed rgba(119,68,111,.28); color: #8a7c83; background: rgba(243,228,225,.45); font-size: 1.35rem; }
+@media (max-width: 640px) {
+  .image-uploader-grid { grid-template-columns: 1fr; }
+  .image-preview { max-width: 360px; margin-inline: auto; }
+  .product-card-media { grid-template-columns: 64px minmax(0,1fr); }
+  .product-thumb, .product-thumb-placeholder { width: 64px; height: 64px; border-radius: 14px; }
+}
