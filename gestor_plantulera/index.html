@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#F3E4E1">
   <title>La Plantulera | Gestor</title>
-  <link rel="stylesheet" href="css/estilos.css?v=0.1.0">
+  <link rel="stylesheet" href="css/estilos.css?v=0.2.0">
 </head>
 <body>
   <main class="app-shell">
@@ -57,86 +57,247 @@
 
     <section id="pantallaGestor" class="dashboard hidden" aria-hidden="true">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">LA PLANTULERA</p>
-          <h1>Gestor</h1>
-        </div>
+        <button id="btnInicio" class="brand-home" type="button" aria-label="Ir al inicio del gestor">
+          <span class="brand-home-icon" aria-hidden="true">🌸</span>
+          <span>
+            <span class="eyebrow">LA PLANTULERA</span>
+            <strong>Gestor</strong>
+          </span>
+        </button>
         <button id="btnCerrarSesion" class="btn btn-secondary" type="button">Cerrar sesión</button>
       </header>
 
-      <section class="welcome panel">
-        <div>
-          <p class="muted">Sesión activa</p>
-          <h2 id="saludoUsuario">Hola</h2>
-          <p id="correoUsuario" class="user-email"></p>
-        </div>
-        <span class="online-badge">● Online</span>
+      <section id="vistaInicio" class="vista">
+        <section class="welcome panel">
+          <div>
+            <p class="muted">Sesión activa</p>
+            <h2 id="saludoUsuario">Hola</h2>
+            <p id="correoUsuario" class="user-email"></p>
+            <p id="rolUsuario" class="role-label"></p>
+          </div>
+          <span class="online-badge">● Online</span>
+        </section>
+
+        <section class="resumen-grid" aria-label="Resumen del gestor">
+          <article class="stat-card">
+            <span class="stat-label">Categorías</span>
+            <strong id="totalCategorias">—</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Productos</span>
+            <strong id="totalProductos">—</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Borradores</span>
+            <strong id="totalBorradores">—</strong>
+          </article>
+        </section>
+
+        <section class="grid-modulos" aria-label="Módulos del gestor">
+          <button class="module-card module-button" type="button" data-ir="productos">
+            <span class="module-icon">🎨</span>
+            <h3>Productos</h3>
+            <p>Crear y editar productos del catálogo.</p>
+            <span class="tag tag-ready">Disponible v0.2</span>
+          </button>
+          <button class="module-card module-button" type="button" data-ir="categorias">
+            <span class="module-icon">🗂️</span>
+            <h3>Categorías</h3>
+            <p>Crear, ordenar y activar categorías.</p>
+            <span class="tag tag-ready">Disponible v0.2</span>
+          </button>
+          <article class="module-card">
+            <span class="module-icon">📷</span>
+            <h3>Fotografías</h3>
+            <p>Cámara, galería y optimización.</p>
+            <span class="tag">Próximamente v0.3</span>
+          </article>
+          <article class="module-card">
+            <span class="module-icon">👀</span>
+            <h3>Revisar y publicar</h3>
+            <p>Guardar → Revisar → Publicar.</p>
+            <span class="tag">Próximamente v0.4</span>
+          </article>
+          <article class="module-card">
+            <span class="module-icon">🖼️</span>
+            <h3>Portada</h3>
+            <p>Administrar las cuatro imágenes del carrusel.</p>
+            <span class="tag">Próximamente v0.5</span>
+          </article>
+          <article class="module-card">
+            <span class="module-icon">🌸</span>
+            <h3>Plantilocura</h3>
+            <p>Preparar las piezas de cada jueves.</p>
+            <span class="tag">Próximamente v0.6</span>
+          </article>
+          <article class="module-card">
+            <span class="module-icon">💬</span>
+            <h3>Clientes felices</h3>
+            <p>Testimonios reales de clientes.</p>
+            <span class="tag">Próximamente v0.7</span>
+          </article>
+          <article class="module-card">
+            <span class="module-icon">📱</span>
+            <h3>Redes sociales</h3>
+            <p>Instagram, TikTok y WhatsApp.</p>
+            <span class="tag">Próximamente v0.7</span>
+          </article>
+        </section>
+
+        <section class="publish panel">
+          <div>
+            <p class="eyebrow">FLUJO DE TRABAJO</p>
+            <h2>Guardar → Revisar → Publicar</h2>
+            <p class="muted">En v0.2 los productos se guardan como borradores. La publicación explícita llegará en v0.4.</p>
+          </div>
+          <button class="btn btn-primary" type="button" disabled>Publicar catálogo</button>
+        </section>
       </section>
 
-      <section class="grid-modulos" aria-label="Módulos del gestor">
-        <article class="module-card">
-          <span class="module-icon">🎨</span>
-          <h3>Productos</h3>
-          <p>Agregar, editar y revisar productos.</p>
-          <span class="tag">Próximamente v0.2</span>
-        </article>
-        <article class="module-card">
-          <span class="module-icon">🗂️</span>
-          <h3>Categorías</h3>
-          <p>Crear, ordenar y ocultar categorías.</p>
-          <span class="tag">Próximamente v0.2</span>
-        </article>
-        <article class="module-card">
-          <span class="module-icon">📷</span>
-          <h3>Fotografías</h3>
-          <p>Cámara, galería y optimización.</p>
-          <span class="tag">Próximamente v0.3</span>
-        </article>
-        <article class="module-card">
-          <span class="module-icon">👀</span>
-          <h3>Revisar</h3>
-          <p>Vista previa antes de publicar.</p>
-          <span class="tag">Próximamente v0.4</span>
-        </article>
-        <article class="module-card">
-          <span class="module-icon">🖼️</span>
-          <h3>Portada</h3>
-          <p>Administrar las cuatro imágenes del carrusel.</p>
-          <span class="tag">Próximamente v0.5</span>
-        </article>
-        <article class="module-card">
-          <span class="module-icon">🌸</span>
-          <h3>Plantilocura</h3>
-          <p>Preparar las piezas de cada jueves.</p>
-          <span class="tag">Próximamente v0.6</span>
-        </article>
-        <article class="module-card">
-          <span class="module-icon">💬</span>
-          <h3>Clientes felices</h3>
-          <p>Testimonios reales de clientes.</p>
-          <span class="tag">Próximamente v0.7</span>
-        </article>
-        <article class="module-card">
-          <span class="module-icon">📱</span>
-          <h3>Redes sociales</h3>
-          <p>Instagram, TikTok y WhatsApp.</p>
-          <span class="tag">Próximamente v0.7</span>
-        </article>
+      <section id="vistaCategorias" class="vista hidden">
+        <div class="section-heading">
+          <div>
+            <button class="back-link" type="button" data-ir="inicio">← Volver</button>
+            <p class="eyebrow">MÓDULO</p>
+            <h2>Categorías</h2>
+            <p class="muted">Crea nuevas categorías, cambia su orden o desactívalas sin borrarlas.</p>
+          </div>
+          <button id="btnNuevaCategoria" class="btn btn-primary" type="button">+ Nueva categoría</button>
+        </div>
+
+        <div id="mensajeCategorias" class="status" role="status" aria-live="polite"></div>
+        <div id="listaCategorias" class="data-grid"></div>
       </section>
 
-      <section class="publish panel">
-        <div>
-          <p class="eyebrow">FLUJO DE TRABAJO</p>
-          <h2>Guardar → Revisar → Publicar</h2>
-          <p class="muted">La publicación se habilitará cuando implementemos los módulos de contenido.</p>
+      <section id="vistaProductos" class="vista hidden">
+        <div class="section-heading">
+          <div>
+            <button class="back-link" type="button" data-ir="inicio">← Volver</button>
+            <p class="eyebrow">MÓDULO</p>
+            <h2>Productos</h2>
+            <p class="muted">En esta versión los productos nuevos se guardan como borradores.</p>
+          </div>
+          <button id="btnNuevoProducto" class="btn btn-primary" type="button">+ Nuevo producto</button>
         </div>
-        <button class="btn btn-primary" type="button" disabled>Publicar catálogo</button>
+
+        <div id="mensajeProductos" class="status" role="status" aria-live="polite"></div>
+        <div id="listaProductos" class="data-grid"></div>
+      </section>
+
+      <section id="panelCategoria" class="editor-overlay hidden" aria-hidden="true">
+        <form id="formCategoria" class="editor-card panel" novalidate>
+          <div class="editor-header">
+            <div>
+              <p class="eyebrow">CATEGORÍA</p>
+              <h2 id="tituloCategoria">Nueva categoría</h2>
+            </div>
+            <button class="icon-button" type="button" data-cerrar-editor aria-label="Cerrar">✕</button>
+          </div>
+
+          <input id="categoriaId" type="hidden">
+
+          <label for="categoriaNombre">Nombre *</label>
+          <input id="categoriaNombre" type="text" maxlength="80" required placeholder="Ej. Cuadros">
+
+          <label for="categoriaSlug">Slug *</label>
+          <input id="categoriaSlug" type="text" maxlength="100" required placeholder="ej-cuadros">
+          <p class="field-help">Se usa internamente en las URLs y debe ser único.</p>
+
+          <label for="categoriaDescripcion">Descripción</label>
+          <textarea id="categoriaDescripcion" rows="3" maxlength="250" placeholder="Descripción breve de la categoría"></textarea>
+
+          <label for="categoriaOrden">Orden</label>
+          <input id="categoriaOrden" type="number" min="0" step="1" value="0">
+
+          <label class="check-row">
+            <input id="categoriaActiva" type="checkbox" checked>
+            <span>Categoría activa</span>
+          </label>
+
+          <div class="editor-actions">
+            <button class="btn btn-secondary" type="button" data-cerrar-editor>Cancelar</button>
+            <button id="btnGuardarCategoria" class="btn btn-primary" type="submit">Guardar categoría</button>
+          </div>
+          <p id="mensajeFormCategoria" class="status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section id="panelProducto" class="editor-overlay hidden" aria-hidden="true">
+        <form id="formProducto" class="editor-card editor-card-wide panel" novalidate>
+          <div class="editor-header">
+            <div>
+              <p class="eyebrow">PRODUCTO</p>
+              <h2 id="tituloProducto">Nuevo producto</h2>
+            </div>
+            <button class="icon-button" type="button" data-cerrar-editor aria-label="Cerrar">✕</button>
+          </div>
+
+          <input id="productoId" type="hidden">
+
+          <div class="form-grid">
+            <div>
+              <label for="productoNombre">Nombre *</label>
+              <input id="productoNombre" type="text" maxlength="120" required placeholder="Ej. Matera mascota personalizada">
+            </div>
+            <div>
+              <label for="productoCategoria">Categoría *</label>
+              <select id="productoCategoria" required></select>
+            </div>
+          </div>
+
+          <label for="productoSlug">Slug *</label>
+          <input id="productoSlug" type="text" maxlength="140" required placeholder="matera-mascota-personalizada">
+
+          <label for="productoDescripcionCorta">Descripción corta</label>
+          <input id="productoDescripcionCorta" type="text" maxlength="180" placeholder="Una frase breve para la tarjeta del catálogo">
+
+          <label for="productoDescripcion">Descripción</label>
+          <textarea id="productoDescripcion" rows="4" maxlength="1200" placeholder="Detalles del trabajo, personalización, materiales, etc."></textarea>
+
+          <div class="form-grid">
+            <div>
+              <label for="productoPrecio">Precio (opcional)</label>
+              <input id="productoPrecio" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Déjalo vacío si cotizas por WhatsApp">
+            </div>
+            <div>
+              <label for="productoDisponibilidad">Disponibilidad</label>
+              <select id="productoDisponibilidad">
+                <option value="por_encargo">Por encargo</option>
+                <option value="disponible">Disponible</option>
+                <option value="vendido">Vendido</option>
+                <option value="agotado">Agotado</option>
+                <option value="oculto">Oculto</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="checks-grid">
+            <label class="check-row">
+              <input id="productoDestacado" type="checkbox">
+              <span>Producto destacado</span>
+            </label>
+            <label class="check-row">
+              <input id="productoPlantilocura" type="checkbox">
+              <span>Participa en Plantilocura</span>
+            </label>
+          </div>
+
+          <div class="notice-box">
+            <strong>Fotos:</strong> en v0.3 activaremos cámara, galería y optimización WebP. Por ahora este formulario guarda únicamente la información del producto.
+          </div>
+
+          <div class="editor-actions">
+            <button class="btn btn-secondary" type="button" data-cerrar-editor>Cancelar</button>
+            <button id="btnGuardarProducto" class="btn btn-primary" type="submit">Guardar borrador</button>
+          </div>
+          <p id="mensajeFormProducto" class="status" role="status" aria-live="polite"></p>
+        </form>
       </section>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=0.1.0"></script>
-  <script src="js/app.js?v=0.1.0"></script>
+  <script src="js/config.js?v=0.2.0"></script>
+  <script src="js/app.js?v=0.2.0"></script>
 </body>
 </html>
