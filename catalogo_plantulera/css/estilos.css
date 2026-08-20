@@ -648,3 +648,26 @@ button { cursor: pointer; }
 }
 .carrusel:focus-within .carrusel__control,
 .carrusel:hover .carrusel__control { opacity: 1; }
+
+/* v0.2.0 - Catalogo conectado a Supabase */
+.catalogo-estado {
+  margin: 0 0 22px;
+  padding: 14px 16px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-lg);
+  background: var(--rosa-crema);
+  color: var(--ciruela);
+  font-weight: 750;
+  text-align: center;
+}
+.catalogo-estado.oculto { display: none; }
+.catalogo-estado.error {
+  background: var(--blanco);
+  border-style: dashed;
+}
+.producto__precio {
+  margin: -2px 0 14px;
+  color: var(--negro);
+  font-size: 1rem;
+  font-weight: 900;
+}

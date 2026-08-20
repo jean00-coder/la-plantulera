@@ -66,20 +66,16 @@
     <section class="seccion" id="catalogo">
       <div class="contenedor">
         <div class="cabecera-seccion">
-          <span class="etiqueta">Catálogo inicial</span>
+          <span class="etiqueta">Catálogo</span>
           <h2 class="titulo-seccion">Creaciones e ideas para personalizar</h2>
-          <p class="descripcion-seccion">Esta primera versión muestra trabajos reales como referencia. Los precios no se publican todavía porque los personalizados dependen del producto y de la complejidad del diseño.</p>
+          <p class="descripcion-seccion">Explora las piezas publicadas por La Plantulera. Algunos trabajos están disponibles y otros se realizan por encargo; cuando un precio aplique, aparecerá directamente en la ficha.</p>
         </div>
 
-        <div class="categorias" aria-label="Filtrar por categoría">
+        <div class="categorias" id="categoriasCatalogo" aria-label="Filtrar por categoría">
           <button class="categoria-btn activo" type="button" data-categoria="Todos">Todos</button>
-          <button class="categoria-btn" type="button" data-categoria="Materas">Materas</button>
-          <button class="categoria-btn" type="button" data-categoria="Tazas">Tazas</button>
-          <button class="categoria-btn" type="button" data-categoria="Termos">Termos</button>
-          <button class="categoria-btn" type="button" data-categoria="Forros de celular">Forros de celular</button>
-          <button class="categoria-btn" type="button" data-categoria="Velas">Velas artesanales</button>
         </div>
 
+        <div class="catalogo-estado" id="catalogoEstado" role="status" aria-live="polite">Cargando productos publicados…</div>
         <div class="grid-productos" id="gridProductos"></div>
         <div class="vacio" id="estadoVacio"></div>
       </div>
@@ -166,7 +162,7 @@
           <a data-whatsapp-general target="_blank" rel="noopener">WhatsApp</a>
         </div>
       </div>
-      <div class="footer__nota">Versión inicial v0.1.2 · Información comercial, redes sociales, precios y políticas se completarán antes del lanzamiento público.</div>
+      <div class="footer__nota">Catálogo conectado al gestor online · Los productos visibles son únicamente los que han sido publicados.</div>
     </div>
   </footer>
 
@@ -204,7 +200,7 @@
   </div>
 
   <script src="js/portada.js?v=0.1.2"></script>
-  <script src="js/productos.js?v=0.1.2"></script>
-  <script src="js/app.js?v=0.1.2"></script>
+  <script src="js/config.js?v=0.2.0"></script>
+  <script src="js/app.js?v=0.2.0"></script>
 </body>
 </html>

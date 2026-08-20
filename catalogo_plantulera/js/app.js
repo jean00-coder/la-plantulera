@@ -1,9 +1,16 @@
 (() => {
   const WHATSAPP = '573214230922';
-  const productos = Array.isArray(window.PRODUCTOS) ? window.PRODUCTOS : [];
+  const CONFIG = window.LA_PLANTULERA_CONFIG || {};
+  const SUPABASE_URL = String(CONFIG.supabaseUrl || '').replace(/\/$/, '');
+  const SUPABASE_KEY = String(CONFIG.supabasePublishableKey || '');
+
+  let productos = [];
+  let categoriaActiva = 'Todos';
+
   const grid = document.querySelector('#gridProductos');
   const vacio = document.querySelector('#estadoVacio');
-  const botonesCategoria = [...document.querySelectorAll('[data-categoria]')];
+  const catalogoEstado = document.querySelector('#catalogoEstado');
+  const categoriasCatalogo = document.querySelector('#categoriasCatalogo');
   const modal = document.querySelector('#modalProducto');
   const modalImagen = document.querySelector('#modalImagen');
   const modalCategoria = document.querySelector('#modalCategoria');
@@ -29,58 +36,146 @@
 
   const enlaceWhatsapp = (mensaje) => `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
 
+  const estadoVisible = (estado) => ({
+    disponible: 'Disponible',
+    por_encargo: 'Por encargo',
+    vendido: 'Vendido',
+    agotado: 'Agotado'
+  }[estado] || 'Por encargo');
+
+  const codigoVisible = (producto) => {
+    if (producto.slug) return producto.slug.toUpperCase();
+    return `LP-${String(producto.id || '').slice(0, 8).toUpperCase()}`;
+  };
+
+  const precioVisible = (precio) => {
+    if (precio === null || precio === undefined || precio === '') return '';
+    const numero = Number(precio);
+    if (!Number.isFinite(numero)) return '';
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0
+    }).format(numero);
+  };
+
+  const descripcionVisible = (producto) =>
+    producto.short_description || producto.description || 'Pieza de La Plantulera pintada y preparada con cuidado.';
+
   const mensajeProducto = (producto) => [
-    'Hola, vi este trabajo en el catálogo de La Plantulera 🌸',
+    'Hola, vi este producto en el catálogo de La Plantulera 🌸',
     '',
-    `Producto: ${producto.nombre}`,
-    `Código: ${producto.id}`,
-    `Categoría: ${producto.categoria}`,
+    `Producto: ${producto.name}`,
+    `Código: ${codigoVisible(producto)}`,
+    `Categoría: ${producto.category?.name || 'Sin categoría'}`,
     '',
-    producto.personalizable
+    producto.availability_status === 'por_encargo'
       ? 'Quiero cotizar una versión personalizada y contarles mi idea.'
-      : 'Quiero conocer disponibilidad, precio y opciones para una pieza como esta.'
+      : 'Quiero conocer la disponibilidad y los detalles de esta pieza.'
   ].join('\n');
 
   function tarjeta(producto) {
+    const descripcion = descripcionVisible(producto);
+    const precio = precioVisible(producto.price);
+    const categoria = producto.category?.name || 'Sin categoría';
+    const imagen = producto.cover_image_url || 'img/branding/logo.webp';
+
     return `
       <article class="producto" data-id="${escapar(producto.id)}">
-        <button class="producto__imagen-btn" type="button" data-ver="${escapar(producto.id)}" aria-label="Ver detalles de ${escapar(producto.nombre)}">
-          <img class="producto__imagen" src="${escapar(producto.imagen)}" alt="${escapar(producto.nombre)}" loading="lazy">
+        <button class="producto__imagen-btn" type="button" data-ver="${escapar(producto.id)}" aria-label="Ver detalles de ${escapar(producto.name)}">
+          <img class="producto__imagen" src="${escapar(imagen)}" alt="${escapar(producto.name)}" loading="lazy">
         </button>
         <div class="producto__cuerpo">
           <div class="producto__meta">
-            <span class="producto__categoria">${escapar(producto.categoria)}</span>
-            <span class="estado">${escapar(producto.estado)}</span>
+            <span class="producto__categoria">${escapar(categoria)}</span>
+            <span class="estado">${escapar(estadoVisible(producto.availability_status))}</span>
           </div>
-          <h3>${escapar(producto.nombre)}</h3>
-          <p>${escapar(producto.descripcion)}</p>
+          <h3>${escapar(producto.name)}</h3>
+          <p>${escapar(descripcion)}</p>
+          ${precio ? `<div class="producto__precio">${escapar(precio)}</div>` : ''}
           <div class="producto__acciones">
             <button class="boton boton--secundario" type="button" data-ver="${escapar(producto.id)}">Ver detalles</button>
-            <a class="boton boton--principal" href="${enlaceWhatsapp(mensajeProducto(producto))}" target="_blank" rel="noopener">Cotizar</a>
+            <a class="boton boton--principal" href="${enlaceWhatsapp(mensajeProducto(producto))}" target="_blank" rel="noopener">${producto.availability_status === 'por_encargo' ? 'Cotizar' : 'Consultar'}</a>
           </div>
         </div>
       </article>`;
   }
 
-  function render(categoria = 'Todos') {
-    const visibles = categoria === 'Todos' ? productos : productos.filter(p => p.categoria === categoria);
+  function render() {
+    const visibles = categoriaActiva === 'Todos'
+      ? productos
+      : productos.filter(p => p.category?.slug === categoriaActiva);
+
     grid.innerHTML = visibles.map(tarjeta).join('');
     vacio.classList.toggle('visible', visibles.length === 0);
-    vacio.textContent = categoria === 'Termos'
-      ? 'La categoría Termos ya está preparada. Añadiremos un producto real cuando tengamos su fotografía y datos.'
-      : 'Aún no hay trabajos cargados en esta categoría.';
+    vacio.textContent = categoriaActiva === 'Todos'
+      ? 'Todavía no hay productos publicados. Cuando se publique uno desde el gestor aparecerá aquí automáticamente.'
+      : 'Aún no hay productos publicados en esta categoría.';
+  }
+
+  function renderCategorias(categorias) {
+    const botones = [
+      '<button class="categoria-btn activo" type="button" data-categoria="Todos">Todos</button>',
+      ...categorias.map(categoria => `
+        <button class="categoria-btn" type="button" data-categoria="${escapar(categoria.slug)}">${escapar(categoria.name)}</button>`)
+    ];
+    categoriasCatalogo.innerHTML = botones.join('');
+  }
+
+  async function consultaSupabase(ruta) {
+    if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Configuración de Supabase incompleta.');
+
+    const respuesta = await fetch(`${SUPABASE_URL}/rest/v1/${ruta}`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Accept: 'application/json'
+      }
+    });
+
+    if (!respuesta.ok) {
+      const detalle = await respuesta.text().catch(() => '');
+      throw new Error(`Supabase respondió ${respuesta.status}. ${detalle}`.trim());
+    }
+
+    return respuesta.json();
+  }
+
+  async function cargarCatalogo() {
+    catalogoEstado.classList.remove('oculto', 'error');
+    catalogoEstado.textContent = 'Cargando productos publicados…';
+
+    try {
+      const [categorias, filasProductos] = await Promise.all([
+        consultaSupabase('categories?select=id,name,slug,sort_order&active=eq.true&order=sort_order.asc,name.asc'),
+        consultaSupabase('products?select=id,name,slug,short_description,description,price,availability_status,featured,plantilocura,cover_image_url,published_at,created_at,category:categories(id,name,slug)&publication_status=eq.published&availability_status=neq.oculto&order=published_at.desc.nullslast,created_at.desc')
+      ]);
+
+      productos = Array.isArray(filasProductos) ? filasProductos : [];
+      renderCategorias(Array.isArray(categorias) ? categorias : []);
+      render();
+      catalogoEstado.classList.add('oculto');
+    } catch (error) {
+      console.error('No se pudo cargar el catálogo desde Supabase:', error);
+      productos = [];
+      renderCategorias([]);
+      render();
+      catalogoEstado.textContent = 'No pudimos actualizar el catálogo en este momento. Intenta recargar la página en unos minutos.';
+      catalogoEstado.classList.add('error');
+    }
   }
 
   function abrirModal(id) {
     const producto = productos.find(p => p.id === id);
     if (!producto) return;
-    modalImagen.src = producto.imagen;
-    modalImagen.alt = producto.nombre;
-    modalCategoria.textContent = producto.categoria;
-    modalTitulo.textContent = producto.nombre;
-    modalDescripcion.textContent = producto.descripcion;
-    modalEstado.textContent = producto.estado;
-    modalCodigo.textContent = producto.id;
+    const imagen = producto.cover_image_url || 'img/branding/logo.webp';
+    modalImagen.src = imagen;
+    modalImagen.alt = producto.name;
+    modalCategoria.textContent = producto.category?.name || 'Sin categoría';
+    modalTitulo.textContent = producto.name;
+    modalDescripcion.textContent = descripcionVisible(producto);
+    modalEstado.textContent = estadoVisible(producto.availability_status);
+    modalCodigo.textContent = codigoVisible(producto);
+    modalWhatsapp.textContent = producto.availability_status === 'por_encargo' ? 'Quiero cotizar uno' : 'Consultar por WhatsApp';
     modalWhatsapp.href = enlaceWhatsapp(mensajeProducto(producto));
     modal.classList.add('abierto');
     modal.setAttribute('aria-hidden', 'false');
@@ -108,12 +203,13 @@
     if (!modal.classList.contains('abierto')) document.body.classList.remove('modal-abierto');
   }
 
-  botonesCategoria.forEach(btn => {
-    btn.addEventListener('click', () => {
-      botonesCategoria.forEach(b => b.classList.remove('activo'));
-      btn.classList.add('activo');
-      render(btn.dataset.categoria);
-    });
+  categoriasCatalogo.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-categoria]');
+    if (!btn) return;
+    categoriasCatalogo.querySelectorAll('[data-categoria]').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+    categoriaActiva = btn.dataset.categoria;
+    render();
   });
 
   document.addEventListener('click', (event) => {
@@ -219,5 +315,5 @@
   }
 
   iniciarCarrusel();
-  render();
+  cargarCatalogo();
 })();
