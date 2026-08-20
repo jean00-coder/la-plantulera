@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="La Plantulera: regalos pintados con amor. Materas, tazas, termos, forros de celular y velas artesanales. Regalos personalizados y pintados a mano.">
+  <meta name="theme-color" content="#F3E4E1">
+  <title>La Plantulera | Regalos pintados con amor</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/estilos.css?v=0.1.2">
+  <link rel="stylesheet" href="css/responsive.css?v=0.1.2">
+</head>
+<body>
+  <header class="encabezado">
+    <div class="contenedor encabezado__contenido">
+      <div class="marca">
+        <button class="logo-perfil logo-perfil--encabezado" type="button" data-ver-logo aria-label="Ver logo de La Plantulera en grande">
+          <img class="marca__logo" src="img/branding/logo.webp" alt="Logo de La Plantulera">
+        </button>
+        <a class="marca__texto" href="#inicio" aria-label="Ir al inicio de La Plantulera">
+          <strong class="marca__nombre">La Plantulera</strong>
+          <small class="marca__frase">Regalos pintados con amor</small>
+        </a>
+      </div>
+
+      <nav class="navegacion" id="navegacion" aria-label="Navegación principal">
+        <a href="#catalogo">Catálogo</a>
+        <a href="#personalizados">Personalizados</a>
+        <a href="#plantilocura">Plantilocura</a>
+        <a href="#clientes">Clientes felices</a>
+        <a href="#redes">Redes</a>
+      </nav>
+
+      <button class="menu-movil" id="menuMovil" type="button" aria-label="Abrir menú" aria-expanded="false">☰</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="inicio">
+      <div class="contenedor hero__grid">
+        <div>
+          <span class="etiqueta">Arte hecho a mano</span>
+          <h1>La Plantulera</h1>
+          <p class="hero__subtitulo">Regalos pintados con amor</p>
+          <p class="hero__texto">Tus ideas convertidas en detalles únicos. Pintamos a mano objetos cotidianos para transformarlos en regalos especiales, recuerdos y piezas hechas para ti.</p>
+          <div class="acciones">
+            <a class="boton boton--principal" href="#catalogo">Ver creaciones</a>
+            <a class="boton boton--secundario" data-whatsapp-general target="_blank" rel="noopener">Quiero personalizar</a>
+          </div>
+        </div>
+
+        <div class="hero__imagen-wrap">
+          <div class="carrusel" id="carruselPortada" aria-roledescription="carrusel" aria-label="Creaciones destacadas de La Plantulera">
+            <div class="carrusel__ventana">
+              <div class="carrusel__pista" id="carruselPista"></div>
+            </div>
+            <button class="carrusel__control carrusel__control--anterior" type="button" data-carrusel-anterior aria-label="Imagen anterior">‹</button>
+            <button class="carrusel__control carrusel__control--siguiente" type="button" data-carrusel-siguiente aria-label="Imagen siguiente">›</button>
+            <div class="carrusel__indicadores" id="carruselIndicadores" aria-label="Seleccionar imagen"></div>
+          </div>
+          <div class="hero__sello">Pintado a mano <span>Cada idea puede convertirse en algo único.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="seccion" id="catalogo">
+      <div class="contenedor">
+        <div class="cabecera-seccion">
+          <span class="etiqueta">Catálogo inicial</span>
+          <h2 class="titulo-seccion">Creaciones e ideas para personalizar</h2>
+          <p class="descripcion-seccion">Esta primera versión muestra trabajos reales como referencia. Los precios no se publican todavía porque los personalizados dependen del producto y de la complejidad del diseño.</p>
+        </div>
+
+        <div class="categorias" aria-label="Filtrar por categoría">
+          <button class="categoria-btn activo" type="button" data-categoria="Todos">Todos</button>
+          <button class="categoria-btn" type="button" data-categoria="Materas">Materas</button>
+          <button class="categoria-btn" type="button" data-categoria="Tazas">Tazas</button>
+          <button class="categoria-btn" type="button" data-categoria="Termos">Termos</button>
+          <button class="categoria-btn" type="button" data-categoria="Forros de celular">Forros de celular</button>
+          <button class="categoria-btn" type="button" data-categoria="Velas">Velas artesanales</button>
+        </div>
+
+        <div class="grid-productos" id="gridProductos"></div>
+        <div class="vacio" id="estadoVacio"></div>
+      </div>
+    </section>
+
+    <section class="seccion seccion--rosa personalizados" id="personalizados">
+      <div class="contenedor personalizados__grid">
+        <div>
+          <span class="etiqueta">Hazlo único</span>
+          <h2>Pintamos tus ideas</h2>
+          <p class="descripcion-seccion">La mayor parte del trabajo de La Plantulera se realiza por encargo. Puedes partir de una idea, una mascota, una profesión, una frase o una referencia y conversar directamente sobre lo que quieres crear.</p>
+
+          <div class="lista-pasos">
+            <div class="paso"><span class="paso__numero">1</span><p>Elige el tipo de producto que quieres personalizar.</p></div>
+            <div class="paso"><span class="paso__numero">2</span><p>Cuéntanos tu idea y envía las referencias por WhatsApp.</p></div>
+            <div class="paso"><span class="paso__numero">3</span><p>Confirmamos posibilidad, precio y tiempo de elaboración.</p></div>
+          </div>
+
+          <a class="boton boton--principal" data-whatsapp-general target="_blank" rel="noopener">Cotizar mi idea por WhatsApp</a>
+        </div>
+        <img class="personalizados__imagen" src="img/productos/forro-mascota.webp" alt="Forro para celular pintado a mano con retrato de mascota" loading="lazy">
+      </div>
+    </section>
+
+    <section class="seccion plantilocura" id="plantilocura">
+      <div class="contenedor plantilocura__grid">
+        <img class="plantilocura__imagen" src="img/productos/materas-ilustradas.webp" alt="Matera pintada a mano con ilustración de zorro" loading="lazy">
+        <div class="plantilocura__tarjeta">
+          <span class="etiqueta">Cada jueves 🌸</span>
+          <h2>Jueves de Plantilocura</h2>
+          <p class="descripcion-seccion">Los jueves La Plantulera intenta liberar algunas piezas ya pintadas y listas para encontrar hogar. La disponibilidad puede ser limitada y cada semana puede cambiar.</p>
+          <div class="acciones" style="margin-top:24px">
+            <a class="boton boton--dorado" data-whatsapp-plantilocura target="_blank" rel="noopener">Consultar piezas disponibles</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="seccion" id="clientes">
+      <div class="contenedor clientes__grid">
+        <div class="cabecera-seccion" style="grid-column:1/-1;margin-bottom:0">
+          <span class="etiqueta">Confianza</span>
+          <h2 class="titulo-seccion">Clientes felices</h2>
+          <p class="descripcion-seccion">La marca ya ha realizado ventas. En esta sección incorporaremos únicamente testimonios y fotografías reales cuando nos compartas los comentarios autorizados.</p>
+        </div>
+        <div class="clientes__placeholder">
+          <strong>Espacio preparado para testimonios reales</strong>
+          No inventamos reseñas. En la siguiente etapa podremos agregar comentarios, fotografías y nombres o iniciales de clientes satisfechos.
+        </div>
+      </div>
+    </section>
+
+    <section class="seccion seccion--beige" id="redes">
+      <div class="contenedor">
+        <div class="cabecera-seccion">
+          <span class="etiqueta">Contenido y proceso</span>
+          <h2 class="titulo-seccion">Síguenos y mira cómo pintamos</h2>
+          <p class="descripcion-seccion">Instagram y TikTok formarán parte del recorrido del catálogo. Los botones quedan preparados; solo falta agregar los usuarios o enlaces oficiales.</p>
+        </div>
+
+        <div class="redes">
+          <div class="red red--pendiente" aria-disabled="true"><strong>Instagram</strong><span>Enlace pendiente</span></div>
+          <div class="red red--pendiente" aria-disabled="true"><strong>TikTok</strong><span>Enlace pendiente</span></div>
+          <a class="red" data-whatsapp-general target="_blank" rel="noopener"><strong>WhatsApp</strong><span>Pedidos y personalizados</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="contenedor">
+      <div class="footer__grid">
+        <div>
+          <button class="logo-perfil logo-perfil--footer" type="button" data-ver-logo aria-label="Ver logo de La Plantulera en grande">
+            <img class="footer__logo" src="img/branding/logo.webp" alt="Logo de La Plantulera" loading="lazy">
+          </button>
+          <h3>La Plantulera</h3>
+          <p>Regalos pintados con amor.</p>
+        </div>
+        <div class="footer__links">
+          <a href="#catalogo">Catálogo</a>
+          <a href="#personalizados">Personalizados</a>
+          <a href="#plantilocura">Jueves de Plantilocura</a>
+          <a data-whatsapp-general target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+      </div>
+      <div class="footer__nota">Versión inicial v0.1.2 · Información comercial, redes sociales, precios y políticas se completarán antes del lanzamiento público.</div>
+    </div>
+  </footer>
+
+  <a class="whatsapp-flotante" data-whatsapp-general target="_blank" rel="noopener" aria-label="Escribir a La Plantulera por WhatsApp">WA</a>
+
+  <div class="modal" id="modalProducto" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+    <div class="modal__panel">
+      <button class="modal__cerrar" type="button" data-cerrar-modal aria-label="Cerrar">×</button>
+      <div class="modal__grid">
+        <img class="modal__imagen" id="modalImagen" src="" alt="">
+        <div class="modal__contenido">
+          <span class="producto__categoria" id="modalCategoria"></span>
+          <h2 id="modalTitulo"></h2>
+          <p id="modalDescripcion"></p>
+          <div class="modal__detalle">
+            <div><strong>Estado:</strong> <span id="modalEstado"></span></div>
+            <div><strong>Código:</strong> <span id="modalCodigo"></span></div>
+          </div>
+          <p>Al ser un trabajo principalmente por encargo, el diseño, precio y tiempo de elaboración se confirman por WhatsApp.</p>
+          <a class="boton boton--principal" id="modalWhatsapp" target="_blank" rel="noopener">Quiero cotizar uno</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-logo" id="modalLogo" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalLogoTitulo">
+    <div class="modal-logo__panel">
+      <button class="modal-logo__cerrar" type="button" data-cerrar-logo aria-label="Cerrar logo ampliado">×</button>
+      <img class="modal-logo__imagen" src="img/branding/logo.webp" alt="Logo ampliado de La Plantulera">
+      <div class="modal-logo__texto">
+        <strong id="modalLogoTitulo">La Plantulera</strong>
+        <span>Regalos pintados con amor</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/portada.js?v=0.1.2"></script>
+  <script src="js/productos.js?v=0.1.2"></script>
+  <script src="js/app.js?v=0.1.2"></script>
+</body>
+</html>

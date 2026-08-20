@@ -1,0 +1,19 @@
+:root {
+  --rosa-crema: #F3E4E1;
+  --lavanda: #C9ACCF;
+  --ciruela: #77446F;
+  --beige: #E7D4B5;
+  --dorado: #D9AD70;
+  --negro: #292525;
+  --blanco-calido: #FFF9F5;
+  --blanco: #FFFFFF;
+  --gris: #6F6666;
+  --borde: rgba(119, 68, 111, 0.16);
+  --sombra: 0 18px 50px rgba(70, 47, 61, 0.10);
+  --sombra-suave: 0 8px 24px rgba(70, 47, 61, 0.08);
+  --radio-xl: 30px;
+  --radio-lg: 22px;
+  --radio-md: 16px;
+  --radio-sm: 12px;
+  --contenedor: 1180px;
+}

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F3E4E1">
+  <title>La Plantulera | Gestor</title>
+  <link rel="stylesheet" href="css/estilos.css?v=0.1.0">
+</head>
+<body>
+  <main class="app-shell">
+    <section id="pantallaLogin" class="auth-layout">
+      <div class="brand-card">
+        <div class="brand-mark" aria-hidden="true">🌸</div>
+        <p class="eyebrow">LA PLANTULERA</p>
+        <h1>Gestor privado</h1>
+        <p class="lead">Regalos pintados con amor</p>
+      </div>
+
+      <form id="formLogin" class="panel auth-panel" novalidate>
+        <h2>Iniciar sesión</h2>
+        <p class="muted">Acceso exclusivo para administradores autorizados.</p>
+
+        <label for="loginEmail">Correo</label>
+        <input id="loginEmail" name="email" type="email" autocomplete="email" inputmode="email" required placeholder="correo@ejemplo.com">
+
+        <label for="loginPassword">Contraseña</label>
+        <div class="password-row">
+          <input id="loginPassword" name="password" type="password" autocomplete="current-password" required minlength="8" placeholder="Mínimo 8 caracteres">
+          <button id="togglePassword" class="icon-button" type="button" aria-label="Mostrar u ocultar contraseña">👁</button>
+        </div>
+
+        <button id="btnLogin" class="btn btn-primary" type="submit">Entrar al gestor</button>
+        <button id="btnRecuperar" class="btn btn-link" type="button">Olvidé mi contraseña</button>
+        <p id="mensajeLogin" class="status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="pantallaPassword" class="auth-layout hidden" aria-hidden="true">
+      <div class="brand-card">
+        <div class="brand-mark" aria-hidden="true">🔐</div>
+        <p class="eyebrow">LA PLANTULERA</p>
+        <h1>Crea tu contraseña</h1>
+        <p class="lead">Este paso se usa al aceptar una invitación o recuperar el acceso.</p>
+      </div>
+
+      <form id="formPassword" class="panel auth-panel" novalidate>
+        <h2>Nueva contraseña</h2>
+        <label for="newPassword">Contraseña</label>
+        <input id="newPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="Mínimo 8 caracteres">
+        <label for="repeatPassword">Repite la contraseña</label>
+        <input id="repeatPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="Repite la contraseña">
+        <button class="btn btn-primary" type="submit">Guardar contraseña</button>
+        <p id="mensajePassword" class="status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="pantallaGestor" class="dashboard hidden" aria-hidden="true">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">LA PLANTULERA</p>
+          <h1>Gestor</h1>
+        </div>
+        <button id="btnCerrarSesion" class="btn btn-secondary" type="button">Cerrar sesión</button>
+      </header>
+
+      <section class="welcome panel">
+        <div>
+          <p class="muted">Sesión activa</p>
+          <h2 id="saludoUsuario">Hola</h2>
+          <p id="correoUsuario" class="user-email"></p>
+        </div>
+        <span class="online-badge">● Online</span>
+      </section>
+
+      <section class="grid-modulos" aria-label="Módulos del gestor">
+        <article class="module-card">
+          <span class="module-icon">🎨</span>
+          <h3>Productos</h3>
+          <p>Agregar, editar y revisar productos.</p>
+          <span class="tag">Próximamente v0.2</span>
+        </article>
+        <article class="module-card">
+          <span class="module-icon">🗂️</span>
+          <h3>Categorías</h3>
+          <p>Crear, ordenar y ocultar categorías.</p>
+          <span class="tag">Próximamente v0.2</span>
+        </article>
+        <article class="module-card">
+          <span class="module-icon">📷</span>
+          <h3>Fotografías</h3>
+          <p>Cámara, galería y optimización.</p>
+          <span class="tag">Próximamente v0.3</span>
+        </article>
+        <article class="module-card">
+          <span class="module-icon">👀</span>
+          <h3>Revisar</h3>
+          <p>Vista previa antes de publicar.</p>
+          <span class="tag">Próximamente v0.4</span>
+        </article>
+        <article class="module-card">
+          <span class="module-icon">🖼️</span>
+          <h3>Portada</h3>
+          <p>Administrar las cuatro imágenes del carrusel.</p>
+          <span class="tag">Próximamente v0.5</span>
+        </article>
+        <article class="module-card">
+          <span class="module-icon">🌸</span>
+          <h3>Plantilocura</h3>
+          <p>Preparar las piezas de cada jueves.</p>
+          <span class="tag">Próximamente v0.6</span>
+        </article>
+        <article class="module-card">
+          <span class="module-icon">💬</span>
+          <h3>Clientes felices</h3>
+          <p>Testimonios reales de clientes.</p>
+          <span class="tag">Próximamente v0.7</span>
+        </article>
+        <article class="module-card">
+          <span class="module-icon">📱</span>
+          <h3>Redes sociales</h3>
+          <p>Instagram, TikTok y WhatsApp.</p>
+          <span class="tag">Próximamente v0.7</span>
+        </article>
+      </section>
+
+      <section class="publish panel">
+        <div>
+          <p class="eyebrow">FLUJO DE TRABAJO</p>
+          <h2>Guardar → Revisar → Publicar</h2>
+          <p class="muted">La publicación se habilitará cuando implementemos los módulos de contenido.</p>
+        </div>
+        <button class="btn btn-primary" type="button" disabled>Publicar catálogo</button>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=0.1.0"></script>
+  <script src="js/app.js?v=0.1.0"></script>
+</body>
+</html>
