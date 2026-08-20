@@ -69,7 +69,8 @@
     const vistas = {
       inicio: $('vistaInicio'),
       categorias: $('vistaCategorias'),
-      productos: $('vistaProductos')
+      productos: $('vistaProductos'),
+      revision: $('vistaRevision')
     };
 
     Object.entries(vistas).forEach(([key, el]) => {
@@ -79,6 +80,7 @@
     if (nombre === 'inicio') cargarResumen();
     if (nombre === 'categorias') cargarCategorias();
     if (nombre === 'productos') cargarProductos();
+    if (nombre === 'revision') cargarRevision();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -333,15 +335,19 @@
   async function cargarResumen() {
     if (!currentAdmin) return;
 
-    const [cats, prods, borradores] = await Promise.all([
+    const [cats, prods, borradores, revision, publicados] = await Promise.all([
       client.from('categories').select('*', { count: 'exact', head: true }),
       client.from('products').select('*', { count: 'exact', head: true }),
-      client.from('products').select('*', { count: 'exact', head: true }).eq('publication_status', 'draft')
+      client.from('products').select('*', { count: 'exact', head: true }).eq('publication_status', 'draft'),
+      client.from('products').select('*', { count: 'exact', head: true }).eq('publication_status', 'review'),
+      client.from('products').select('*', { count: 'exact', head: true }).eq('publication_status', 'published')
     ]);
 
     $('totalCategorias').textContent = cats.count ?? '—';
     $('totalProductos').textContent = prods.count ?? '—';
     $('totalBorradores').textContent = borradores.count ?? '—';
+    $('totalRevision').textContent = revision.count ?? '—';
+    $('totalPublicados').textContent = publicados.count ?? '—';
   }
 
   async function cargarCategorias() {
@@ -450,7 +456,7 @@
         .order('name', { ascending: true }),
       client
         .from('products')
-        .select('id,category_id,name,slug,short_description,description,price,availability_status,publication_status,featured,plantilocura,cover_image_url,created_at,updated_at')
+        .select('id,category_id,name,slug,short_description,description,price,availability_status,publication_status,featured,plantilocura,cover_image_url,created_at,updated_at,published_at,published_by')
         .order('created_at', { ascending: false })
     ]);
 
@@ -473,6 +479,26 @@
     return categoriasCache.find((cat) => cat.id === id)?.name || 'Sin categoría';
   }
 
+  function accionesProducto(prod) {
+    if (prod.publication_status === 'draft') {
+      return `
+        <button class="btn btn-secondary" type="button" data-editar-producto="${prod.id}">Editar</button>
+        <button class="btn btn-primary" type="button" data-enviar-revision="${prod.id}">Enviar a revisión</button>
+      `;
+    }
+
+    if (prod.publication_status === 'review') {
+      return `
+        <button class="btn btn-secondary" type="button" data-editar-producto="${prod.id}">Editar</button>
+        <button class="btn btn-secondary" type="button" data-volver-borrador="${prod.id}">Volver a borrador</button>
+      `;
+    }
+
+    return `
+      <button class="btn btn-secondary" type="button" data-retirar-publicacion="${prod.id}">Retirar publicación</button>
+    `;
+  }
+
   function pintarProductos() {
     const contenedor = $('listaProductos');
     if (!productosCache.length) {
@@ -490,19 +516,171 @@
             <h3>${escapeHtml(prod.name)}</h3>
             <div class="muted">${escapeHtml(prod.short_description || 'Sin descripción corta')}</div>
             <div class="data-meta">
-            <span class="pill">${escapeHtml(nombreCategoria(prod.category_id))}</span>
-            <span class="pill">${escapeHtml(textoDisponibilidad(prod.availability_status))}</span>
-            <span class="pill status-${escapeHtml(prod.publication_status)}">${escapeHtml(textoPublicacion(prod.publication_status))}</span>
-            ${prod.featured ? '<span class="pill">Destacado</span>' : ''}
+              <span class="pill">${escapeHtml(nombreCategoria(prod.category_id))}</span>
+              <span class="pill">${escapeHtml(textoDisponibilidad(prod.availability_status))}</span>
+              <span class="pill status-${escapeHtml(prod.publication_status)}">${escapeHtml(textoPublicacion(prod.publication_status))}</span>
+              ${prod.featured ? '<span class="pill">Destacado</span>' : ''}
               ${prod.plantilocura ? '<span class="pill">Plantilocura</span>' : ''}
             </div>
           </div>
         </div>
         <div class="card-actions">
-          <button class="btn btn-secondary" type="button" data-editar-producto="${prod.id}" ${prod.publication_status === 'published' ? 'disabled title="La edición de publicados se habilitará con el flujo de revisión"' : ''}>Editar</button>
+          ${accionesProducto(prod)}
         </div>
       </article>
     `).join('');
+  }
+
+  function productoListoParaRevision(prod) {
+    if (!prod) return 'No se encontró el producto.';
+    if (!prod.cover_image_url) return 'Agrega una foto principal antes de enviarlo a revisión.';
+    return '';
+  }
+
+  async function cargarRevision() {
+    setStatus($('mensajeRevision'), 'Cargando productos en revisión...');
+
+    const [catsResult, prodsResult] = await Promise.all([
+      client
+        .from('categories')
+        .select('id,name,slug,active,sort_order')
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true }),
+      client
+        .from('products')
+        .select('id,category_id,name,slug,short_description,description,price,availability_status,publication_status,featured,plantilocura,cover_image_url,created_at,updated_at,published_at,published_by')
+        .eq('publication_status', 'review')
+        .order('updated_at', { ascending: false })
+    ]);
+
+    if (catsResult.error) {
+      setStatus($('mensajeRevision'), mensajeError(catsResult.error), 'error');
+      return;
+    }
+    if (prodsResult.error) {
+      setStatus($('mensajeRevision'), mensajeError(prodsResult.error), 'error');
+      return;
+    }
+
+    categoriasCache = catsResult.data || [];
+    const enRevision = prodsResult.data || [];
+    pintarRevision(enRevision);
+    setStatus($('mensajeRevision'), enRevision.length ? '' : 'No hay productos pendientes de revisión.');
+  }
+
+  function pintarRevision(productos) {
+    const contenedor = $('listaRevision');
+    if (!productos.length) {
+      contenedor.innerHTML = '<div class="empty-state">Todo al día. Cuando envíes un borrador a revisión aparecerá aquí.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = productos.map((prod) => `
+      <article class="data-card review-card">
+        <div class="product-card-media">
+          ${prod.cover_image_url
+            ? `<img class="product-thumb" src="${escapeHtml(prod.cover_image_url)}" alt="" loading="lazy">`
+            : '<div class="product-thumb-placeholder" aria-hidden="true">🎨</div>'}
+          <div>
+            <h3>${escapeHtml(prod.name)}</h3>
+            <div class="muted">${escapeHtml(prod.short_description || 'Sin descripción corta')}</div>
+            <div class="data-meta">
+              <span class="pill">${escapeHtml(nombreCategoria(prod.category_id))}</span>
+              <span class="pill">${escapeHtml(textoDisponibilidad(prod.availability_status))}</span>
+              <span class="pill status-review">En revisión</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-secondary" type="button" data-volver-borrador="${prod.id}">Volver a borrador</button>
+          <button class="btn btn-primary" type="button" data-publicar-producto="${prod.id}">Publicar</button>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  async function cambiarEstadoProducto(id, nuevoEstado) {
+    if (!currentSession?.user) return;
+
+    let prod = productosCache.find((item) => item.id === id);
+    if (!prod) {
+      const { data, error } = await client
+        .from('products')
+        .select('id,category_id,name,slug,short_description,description,price,availability_status,publication_status,featured,plantilocura,cover_image_url,created_at,updated_at,published_at,published_by')
+        .eq('id', id)
+        .single();
+      if (error) {
+        setStatus($('mensajeProductos'), mensajeError(error), 'error');
+        setStatus($('mensajeRevision'), mensajeError(error), 'error');
+        return;
+      }
+      prod = data;
+    }
+
+    if (nuevoEstado === 'review') {
+      const falta = productoListoParaRevision(prod);
+      if (falta) {
+        setStatus($('mensajeProductos'), falta, 'error');
+        return;
+      }
+    }
+
+    if (nuevoEstado === 'published') {
+      const falta = productoListoParaRevision(prod);
+      if (falta) {
+        setStatus($('mensajeRevision'), falta, 'error');
+        return;
+      }
+      if (prod.publication_status !== 'review') {
+        setStatus($('mensajeRevision'), 'Solo se pueden publicar productos que estén en revisión.', 'error');
+        return;
+      }
+      const confirmar = window.confirm(`¿Publicar “${prod.name}”? La acción quedará registrada en Supabase.`);
+      if (!confirmar) return;
+    }
+
+    if (prod.publication_status === 'published' && nuevoEstado === 'draft') {
+      const confirmar = window.confirm(`¿Retirar “${prod.name}” de publicación y devolverlo a borrador?`);
+      if (!confirmar) return;
+    }
+
+    const ahora = new Date().toISOString();
+    const payload = {
+      publication_status: nuevoEstado,
+      updated_by: currentSession.user.id,
+      updated_at: ahora
+    };
+
+    if (nuevoEstado === 'published') {
+      payload.published_by = currentSession.user.id;
+      payload.published_at = ahora;
+    } else {
+      payload.published_by = null;
+      payload.published_at = null;
+    }
+
+    setStatus($('mensajeProductos'), 'Actualizando estado...');
+    setStatus($('mensajeRevision'), 'Actualizando estado...');
+
+    const { error } = await client.from('products').update(payload).eq('id', id);
+    if (error) {
+      const msg = mensajeError(error);
+      setStatus($('mensajeProductos'), msg, 'error');
+      setStatus($('mensajeRevision'), msg, 'error');
+      return;
+    }
+
+    await cargarResumen();
+    if (!$('vistaProductos').classList.contains('hidden')) await cargarProductos();
+    if (!$('vistaRevision').classList.contains('hidden')) await cargarRevision();
+
+    const mensajes = {
+      draft: 'Producto devuelto a borrador.',
+      review: 'Producto enviado a revisión.',
+      published: 'Producto publicado correctamente.'
+    };
+    const destino = !$('vistaRevision').classList.contains('hidden') ? $('mensajeRevision') : $('mensajeProductos');
+    setStatus(destino, mensajes[nuevoEstado] || 'Estado actualizado.', 'success');
   }
 
   function llenarSelectCategorias(seleccion = '') {
@@ -535,7 +713,7 @@
 
     const prod = productosCache.find((item) => item.id === id);
     if (prod?.publication_status === 'published') {
-      setStatus($('mensajeProductos'), 'La edición de productos publicados se habilitará con el flujo de revisión de v0.4.', 'error');
+      setStatus($('mensajeProductos'), 'Este producto está publicado. Primero retíralo a borrador para poder editarlo.', 'error');
       return;
     }
 
@@ -572,7 +750,7 @@
     const prodExistente = productosCache.find((item) => item.id === idActual);
 
     if (prodExistente?.publication_status === 'published') {
-      setStatus($('mensajeFormProducto'), 'Este producto ya está publicado y no puede editarse desde v0.3.', 'error');
+      setStatus($('mensajeFormProducto'), 'Este producto está publicado. Retíralo a borrador antes de editarlo.', 'error');
       return;
     }
 
@@ -605,10 +783,14 @@
       payload.id = productId;
       payload.publication_status = 'draft';
       payload.created_by = currentSession.user.id;
+    } else if (prodExistente?.publication_status === 'review') {
+      payload.publication_status = 'draft';
+      payload.published_by = null;
+      payload.published_at = null;
     }
 
     $('btnGuardarProducto').disabled = true;
-    setStatus($('mensajeFormProducto'), imagenProductoBlob ? 'Subiendo foto optimizada...' : 'Guardando borrador...');
+    setStatus($('mensajeFormProducto'), imagenProductoBlob ? 'Subiendo foto optimizada...' : 'Guardando cambios...');
 
     let nuevaImagen = null;
     const imagenAnterior = prodExistente?.cover_image_url || null;
@@ -639,7 +821,12 @@
       cerrarEditores();
       await cargarProductos();
       await cargarResumen();
-      setStatus($('mensajeProductos'), idActual ? 'Producto actualizado.' : 'Producto guardado como borrador.', 'success');
+      const mensajeGuardado = !idActual
+        ? 'Producto guardado como borrador.'
+        : prodExistente?.publication_status === 'review'
+          ? 'Cambios guardados. El producto volvió a borrador para una nueva revisión.'
+          : 'Producto actualizado.';
+      setStatus($('mensajeProductos'), mensajeGuardado, 'success');
     } catch (error) {
       if (nuevaImagen?.path) {
         await client.storage.from('catalog-media').remove([nuevaImagen.path]);
@@ -796,6 +983,30 @@
     const prodId = event.target.closest('[data-editar-producto]')?.dataset.editarProducto;
     if (prodId) {
       abrirProducto(prodId);
+      return;
+    }
+
+    const aRevision = event.target.closest('[data-enviar-revision]')?.dataset.enviarRevision;
+    if (aRevision) {
+      cambiarEstadoProducto(aRevision, 'review');
+      return;
+    }
+
+    const aBorrador = event.target.closest('[data-volver-borrador]')?.dataset.volverBorrador;
+    if (aBorrador) {
+      cambiarEstadoProducto(aBorrador, 'draft');
+      return;
+    }
+
+    const aPublicar = event.target.closest('[data-publicar-producto]')?.dataset.publicarProducto;
+    if (aPublicar) {
+      cambiarEstadoProducto(aPublicar, 'published');
+      return;
+    }
+
+    const aRetirar = event.target.closest('[data-retirar-publicacion]')?.dataset.retirarPublicacion;
+    if (aRetirar) {
+      cambiarEstadoProducto(aRetirar, 'draft');
       return;
     }
 

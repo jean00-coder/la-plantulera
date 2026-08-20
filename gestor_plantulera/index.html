@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#F3E4E1">
   <title>La Plantulera | Gestor</title>
-  <link rel="stylesheet" href="css/estilos.css?v=0.3.0">
+  <link rel="stylesheet" href="css/estilos.css?v=0.4.0">
 </head>
 <body>
   <main class="app-shell">
@@ -91,6 +91,14 @@
             <span class="stat-label">Borradores</span>
             <strong id="totalBorradores">—</strong>
           </article>
+          <article class="stat-card">
+            <span class="stat-label">En revisión</span>
+            <strong id="totalRevision">—</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Publicados</span>
+            <strong id="totalPublicados">—</strong>
+          </article>
         </section>
 
         <section class="grid-modulos" aria-label="Módulos del gestor">
@@ -112,12 +120,12 @@
             <p>Cámara, galería y optimización.</p>
             <span class="tag tag-ready">Disponible v0.3</span>
           </article>
-          <article class="module-card">
+          <button class="module-card module-button" type="button" data-ir="revision">
             <span class="module-icon">👀</span>
             <h3>Revisar y publicar</h3>
-            <p>Guardar → Revisar → Publicar.</p>
-            <span class="tag">Próximamente v0.4</span>
-          </article>
+            <p>Aprueba borradores antes de hacerlos públicos.</p>
+            <span class="tag tag-ready">Disponible v0.4</span>
+          </button>
           <article class="module-card">
             <span class="module-icon">🖼️</span>
             <h3>Portada</h3>
@@ -148,9 +156,9 @@
           <div>
             <p class="eyebrow">FLUJO DE TRABAJO</p>
             <h2>Guardar → Revisar → Publicar</h2>
-            <p class="muted">En v0.3 los productos se guardan como borradores y ya pueden llevar foto optimizada. La publicación explícita llegará en v0.4.</p>
+            <p class="muted">Los cambios se guardan primero como borrador. Después puedes enviarlos a revisión y publicarlos de forma explícita.</p>
           </div>
-          <button class="btn btn-primary" type="button" disabled>Publicar catálogo</button>
+          <button class="btn btn-primary" type="button" data-ir="revision">Revisar pendientes</button>
         </section>
       </section>
 
@@ -175,13 +183,31 @@
             <button class="back-link" type="button" data-ir="inicio">← Volver</button>
             <p class="eyebrow">MÓDULO</p>
             <h2>Productos</h2>
-            <p class="muted">En esta versión los productos nuevos se guardan como borradores.</p>
+            <p class="muted">Crea borradores, edítalos y envíalos a revisión cuando estén listos.</p>
           </div>
           <button id="btnNuevoProducto" class="btn btn-primary" type="button">+ Nuevo producto</button>
         </div>
 
         <div id="mensajeProductos" class="status" role="status" aria-live="polite"></div>
         <div id="listaProductos" class="data-grid"></div>
+      </section>
+
+      <section id="vistaRevision" class="vista hidden">
+        <div class="section-heading">
+          <div>
+            <button class="back-link" type="button" data-ir="inicio">← Volver</button>
+            <p class="eyebrow">FLUJO DE PUBLICACIÓN</p>
+            <h2>Revisar y publicar</h2>
+            <p class="muted">Aquí aparecen únicamente los productos enviados a revisión. Publicar siempre requiere una acción explícita.</p>
+          </div>
+          <button class="btn btn-secondary" type="button" data-ir="productos">Ver todos los productos</button>
+        </div>
+
+        <div class="notice-box workflow-note">
+          <strong>Importante:</strong> en v0.4 el producto queda marcado como publicado en Supabase. El catálogo público todavía es estático; lo conectaremos a estos datos en la siguiente etapa de integración.
+        </div>
+        <div id="mensajeRevision" class="status" role="status" aria-live="polite"></div>
+        <div id="listaRevision" class="data-grid"></div>
       </section>
 
       <section id="panelCategoria" class="editor-overlay hidden" aria-hidden="true">
@@ -310,6 +336,10 @@
             </div>
           </section>
 
+          <div class="notice-box">
+            <strong>Flujo:</strong> guardar no publica. Un producto editado durante revisión vuelve a borrador para que pueda revisarse otra vez.
+          </div>
+
           <div class="editor-actions">
             <button class="btn btn-secondary" type="button" data-cerrar-editor>Cancelar</button>
             <button id="btnGuardarProducto" class="btn btn-primary" type="submit">Guardar borrador</button>
@@ -321,7 +351,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=0.3.0"></script>
-  <script src="js/app.js?v=0.3.0"></script>
+  <script src="js/config.js?v=0.4.0"></script>
+  <script src="js/app.js?v=0.4.0"></script>
 </body>
 </html>
