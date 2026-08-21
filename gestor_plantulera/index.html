@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#F3E4E1">
   <title>La Plantulera | Gestor</title>
-  <link rel="stylesheet" href="css/estilos.css?v=0.5.0">
+  <link rel="stylesheet" href="css/estilos.css?v=0.8.0">
 </head>
 <body>
   <main class="app-shell">
@@ -148,12 +148,12 @@
             <p>Testimonios reales de clientes.</p>
             <span class="tag">En prueba v0.7</span>
           </button>
-          <article class="module-card">
+          <button class="module-card module-button" type="button" data-ir="redes">
             <span class="module-icon">📱</span>
             <h3>Redes sociales</h3>
             <p>Instagram, TikTok y WhatsApp.</p>
-            <span class="tag">Próximamente v0.7</span>
-          </article>
+            <span class="tag">En prueba v0.8</span>
+          </button>
         </section>
 
         <section class="publish panel">
@@ -292,6 +292,88 @@
         </div>
         <div id="mensajeTestimonios" class="status" role="status" aria-live="polite"></div>
         <div id="listaTestimonios" class="data-grid"></div>
+      </section>
+
+      <section id="vistaRedes" class="vista hidden">
+        <div class="section-heading">
+          <div>
+            <button class="back-link" type="button" data-ir="inicio">← Volver</button>
+            <p class="eyebrow">MÓDULO</p>
+            <h2>Redes sociales</h2>
+            <p class="muted">Administra los enlaces oficiales que más adelante verá el catálogo público.</p>
+          </div>
+        </div>
+
+        <div class="notice-box workflow-note">
+          <strong>Importante:</strong> una red activa debe tener un enlace válido. En esta etapa los cambios se guardan únicamente en Supabase; todavía no modifican el catálogo público.
+        </div>
+
+        <form id="formRedes" class="social-settings" novalidate>
+          <article class="social-setting-card panel">
+            <div class="social-setting-head">
+              <div>
+                <span class="module-icon" aria-hidden="true">📸</span>
+                <div>
+                  <h3>Instagram</h3>
+                  <p class="muted">Perfil oficial de La Plantulera.</p>
+                </div>
+              </div>
+              <label class="check-row social-active-toggle">
+                <input id="redInstagramActiva" type="checkbox">
+                <span>Activa</span>
+              </label>
+            </div>
+            <label for="redInstagramUrl">Enlace</label>
+            <input id="redInstagramUrl" type="url" inputmode="url" maxlength="500" placeholder="https://www.instagram.com/usuario">
+            <label for="redInstagramTexto">Texto visible (opcional)</label>
+            <input id="redInstagramTexto" type="text" maxlength="120" placeholder="Ej. Síguenos en Instagram">
+          </article>
+
+          <article class="social-setting-card panel">
+            <div class="social-setting-head">
+              <div>
+                <span class="module-icon" aria-hidden="true">🎵</span>
+                <div>
+                  <h3>TikTok</h3>
+                  <p class="muted">Perfil oficial de contenido y proceso.</p>
+                </div>
+              </div>
+              <label class="check-row social-active-toggle">
+                <input id="redTiktokActiva" type="checkbox">
+                <span>Activa</span>
+              </label>
+            </div>
+            <label for="redTiktokUrl">Enlace</label>
+            <input id="redTiktokUrl" type="url" inputmode="url" maxlength="500" placeholder="https://www.tiktok.com/@usuario">
+            <label for="redTiktokTexto">Texto visible (opcional)</label>
+            <input id="redTiktokTexto" type="text" maxlength="120" placeholder="Ej. Mira cómo pintamos">
+          </article>
+
+          <article class="social-setting-card panel">
+            <div class="social-setting-head">
+              <div>
+                <span class="module-icon" aria-hidden="true">💬</span>
+                <div>
+                  <h3>WhatsApp</h3>
+                  <p class="muted">Enlace oficial para pedidos y personalizados.</p>
+                </div>
+              </div>
+              <label class="check-row social-active-toggle">
+                <input id="redWhatsappActiva" type="checkbox">
+                <span>Activa</span>
+              </label>
+            </div>
+            <label for="redWhatsappUrl">Enlace</label>
+            <input id="redWhatsappUrl" type="url" inputmode="url" maxlength="500" placeholder="https://wa.me/numero">
+            <label for="redWhatsappTexto">Texto visible (opcional)</label>
+            <input id="redWhatsappTexto" type="text" maxlength="120" placeholder="Ej. Pedidos y personalizados">
+          </article>
+
+          <div class="social-settings-actions">
+            <button id="btnGuardarRedes" class="btn btn-primary" type="submit">Guardar redes sociales</button>
+          </div>
+          <p id="mensajeRedes" class="status" role="status" aria-live="polite"></p>
+        </form>
       </section>
 
       <section id="panelPortada" class="editor-overlay hidden" aria-hidden="true">
@@ -588,6 +670,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=0.6.0"></script>
-  <script src="js/app.js?v=0.7.0"></script>
+  <script src="js/app.js?v=0.8.0"></script>
 </body>
 </html>

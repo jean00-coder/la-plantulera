@@ -85,7 +85,8 @@
       revision: $('vistaRevision'),
       portada: $('vistaPortada'),
       plantilocura: $('vistaPlantilocura'),
-      testimonios: $('vistaTestimonios')
+      testimonios: $('vistaTestimonios'),
+      redes: $('vistaRedes')
     };
 
     Object.entries(vistas).forEach(([key, el]) => {
@@ -99,6 +100,7 @@
     if (nombre === 'portada') cargarPortada();
     if (nombre === 'plantilocura') cargarPlantilocura();
     if (nombre === 'testimonios') cargarTestimonios();
+    if (nombre === 'redes') cargarRedes();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -1284,6 +1286,108 @@
     }
   }
 
+  const REDES_CONFIG = [
+    { platform: 'instagram', prefix: 'Instagram', order: 1 },
+    { platform: 'tiktok', prefix: 'Tiktok', order: 2 },
+    { platform: 'whatsapp', prefix: 'Whatsapp', order: 3 }
+  ];
+
+  function normalizarUrlRed(valor) {
+    const texto = String(valor || '').trim();
+    if (!texto) return null;
+
+    let url;
+    try {
+      url = new URL(texto);
+    } catch {
+      throw new Error('Usa un enlace completo que empiece por https://');
+    }
+
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+      throw new Error('El enlace debe comenzar por https:// o http://');
+    }
+    return url.toString();
+  }
+
+  async function cargarRedes() {
+    setStatus($('mensajeRedes'), 'Cargando redes sociales...');
+    const { data, error } = await client
+      .from('social_links')
+      .select('platform,url,display_text,active,sort_order')
+      .in('platform', REDES_CONFIG.map((red) => red.platform))
+      .order('sort_order', { ascending: true });
+
+    if (error) {
+      setStatus($('mensajeRedes'), mensajeError(error), 'error');
+      return;
+    }
+
+    const mapa = new Map((data || []).map((red) => [red.platform, red]));
+    REDES_CONFIG.forEach(({ platform, prefix }) => {
+      const red = mapa.get(platform) || {};
+      $(`red${prefix}Url`).value = red.url || '';
+      $(`red${prefix}Texto`).value = red.display_text || '';
+      $(`red${prefix}Activa`).checked = Boolean(red.active);
+    });
+
+    const faltantes = REDES_CONFIG.filter((red) => !mapa.has(red.platform));
+    setStatus(
+      $('mensajeRedes'),
+      faltantes.length
+        ? 'Faltan registros base en Supabase. Guarda para intentar crearlos.'
+        : 'Configuración cargada correctamente.',
+      faltantes.length ? 'error' : ''
+    );
+  }
+
+  async function guardarRedes(event) {
+    event.preventDefault();
+    if (!currentSession?.user) return;
+
+    let payloads;
+    try {
+      payloads = REDES_CONFIG.map(({ platform, prefix, order }) => {
+        const active = $(`red${prefix}Activa`).checked;
+        const url = normalizarUrlRed($(`red${prefix}Url`).value);
+        const displayText = $(`red${prefix}Texto`).value.trim() || null;
+
+        if (active && !url) {
+          const nombre = platform === 'instagram' ? 'Instagram' : platform === 'tiktok' ? 'TikTok' : 'WhatsApp';
+          throw new Error(`${nombre} está activa, por lo que debes agregar su enlace.`);
+        }
+
+        return {
+          platform,
+          url,
+          display_text: displayText,
+          active,
+          sort_order: order,
+          updated_by: currentSession.user.id,
+          updated_at: new Date().toISOString()
+        };
+      });
+    } catch (error) {
+      setStatus($('mensajeRedes'), mensajeError(error), 'error');
+      return;
+    }
+
+    $('btnGuardarRedes').disabled = true;
+    setStatus($('mensajeRedes'), 'Guardando redes sociales...');
+
+    const { error } = await client
+      .from('social_links')
+      .upsert(payloads, { onConflict: 'platform' });
+
+    $('btnGuardarRedes').disabled = false;
+    if (error) {
+      setStatus($('mensajeRedes'), mensajeError(error), 'error');
+      return;
+    }
+
+    await cargarRedes();
+    setStatus($('mensajeRedes'), 'Redes sociales guardadas correctamente.', 'success');
+  }
+
   function llenarSelectCategorias(seleccion = '') {
     const select = $('productoCategoria');
     const activas = categoriasCache.filter((cat) => cat.active || cat.id === seleccion);
@@ -1555,6 +1659,7 @@
   $('formProducto').addEventListener('submit', guardarProducto);
   $('formPortada').addEventListener('submit', guardarPortada);
   $('formTestimonio').addEventListener('submit', guardarTestimonio);
+  $('formRedes').addEventListener('submit', guardarRedes);
   $('btnTomarFoto').addEventListener('click', () => $('productoImagenCamara').click());
   $('btnElegirFoto').addEventListener('click', () => $('productoImagenGaleria').click());
   $('productoImagenCamara').addEventListener('change', (event) => seleccionarImagenProducto(event.target.files?.[0]));
