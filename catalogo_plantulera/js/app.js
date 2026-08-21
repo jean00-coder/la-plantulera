@@ -13,6 +13,8 @@
   const categoriasCatalogo = document.querySelector('#categoriasCatalogo');
   const plantilocuraLista = document.querySelector('#plantilocuraLista');
   const plantilocuraVacio = document.querySelector('#plantilocuraVacio');
+  const clientesLista = document.querySelector('#clientesLista');
+  const clientesVacio = document.querySelector('#clientesVacio');
   const modal = document.querySelector('#modalProducto');
   const modalImagen = document.querySelector('#modalImagen');
   const modalCategoria = document.querySelector('#modalCategoria');
@@ -160,6 +162,54 @@
     plantilocuraLista.innerHTML = piezas.map(tarjetaPlantilocura).join('');
     plantilocuraLista.classList.toggle('oculto', piezas.length === 0);
     plantilocuraVacio.classList.toggle('visible', piezas.length === 0);
+  }
+
+  const estrellasTestimonio = (rating) => {
+    const numero = Number(rating);
+    if (!Number.isInteger(numero) || numero < 1 || numero > 5) return '';
+    return `<div class="testimonio__estrellas" aria-label="${numero} de 5 estrellas">${'★'.repeat(numero)}${'☆'.repeat(5 - numero)}</div>`;
+  };
+
+  function tarjetaTestimonio(testimonio) {
+    const nombre = String(testimonio.client_name || '').trim();
+    const comentario = String(testimonio.comment || '').trim();
+    const foto = String(testimonio.photo_url || '').trim();
+
+    if (!nombre || !comentario) return '';
+
+    return `
+      <article class="testimonio">
+        ${foto ? `
+          <div class="testimonio__foto-wrap">
+            <img class="testimonio__foto" src="${escapar(foto)}" alt="Foto compartida por ${escapar(nombre)}" loading="lazy">
+          </div>` : ''}
+        <div class="testimonio__contenido">
+          ${estrellasTestimonio(testimonio.rating)}
+          <blockquote class="testimonio__comentario">“${escapar(comentario)}”</blockquote>
+          <strong class="testimonio__nombre">${escapar(nombre)}</strong>
+        </div>
+      </article>`;
+  }
+
+  function renderTestimonios(testimonios) {
+    if (!clientesLista || !clientesVacio) return;
+    const filas = Array.isArray(testimonios) ? testimonios : [];
+    const tarjetas = filas.map(tarjetaTestimonio).filter(Boolean);
+    clientesLista.innerHTML = tarjetas.join('');
+    clientesLista.classList.toggle('oculto', tarjetas.length === 0);
+    clientesVacio.classList.toggle('oculto', tarjetas.length > 0);
+  }
+
+  async function cargarTestimonios() {
+    if (!clientesLista || !clientesVacio) return;
+
+    try {
+      const filas = await consultaSupabase('testimonials?select=id,client_name,comment,photo_url,rating,sort_order,created_at&visible=eq.true&order=sort_order.asc,created_at.asc');
+      renderTestimonios(filas);
+    } catch (error) {
+      console.error('No se pudieron cargar los testimonios desde Supabase:', error);
+      renderTestimonios([]);
+    }
   }
 
   function renderCategorias(categorias) {
@@ -403,4 +453,5 @@
 
   cargarPortada();
   cargarCatalogo();
+  cargarTestimonios();
 })();
