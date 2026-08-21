@@ -78,7 +78,8 @@
       categorias: $('vistaCategorias'),
       productos: $('vistaProductos'),
       revision: $('vistaRevision'),
-      portada: $('vistaPortada')
+      portada: $('vistaPortada'),
+      plantilocura: $('vistaPlantilocura')
     };
 
     Object.entries(vistas).forEach(([key, el]) => {
@@ -90,6 +91,7 @@
     if (nombre === 'productos') cargarProductos();
     if (nombre === 'revision') cargarRevision();
     if (nombre === 'portada') cargarPortada();
+    if (nombre === 'plantilocura') cargarPlantilocura();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -557,12 +559,13 @@
   async function cargarResumen() {
     if (!currentAdmin) return;
 
-    const [cats, prods, borradores, revision, publicados] = await Promise.all([
+    const [cats, prods, borradores, revision, publicados, plantilocura] = await Promise.all([
       client.from('categories').select('*', { count: 'exact', head: true }),
       client.from('products').select('*', { count: 'exact', head: true }),
       client.from('products').select('*', { count: 'exact', head: true }).eq('publication_status', 'draft'),
       client.from('products').select('*', { count: 'exact', head: true }).eq('publication_status', 'review'),
-      client.from('products').select('*', { count: 'exact', head: true }).eq('publication_status', 'published')
+      client.from('products').select('*', { count: 'exact', head: true }).eq('publication_status', 'published'),
+      client.from('products').select('*', { count: 'exact', head: true }).eq('publication_status', 'published').eq('plantilocura', true)
     ]);
 
     $('totalCategorias').textContent = cats.count ?? '—';
@@ -570,6 +573,7 @@
     $('totalBorradores').textContent = borradores.count ?? '—';
     $('totalRevision').textContent = revision.count ?? '—';
     $('totalPublicados').textContent = publicados.count ?? '—';
+    $('totalPlantilocura').textContent = plantilocura.count ?? '—';
   }
 
   async function cargarCategorias() {
@@ -905,6 +909,142 @@
     setStatus(destino, mensajes[nuevoEstado] || 'Estado actualizado.', 'success');
   }
 
+  async function cargarPlantilocura() {
+    setStatus($('mensajePlantilocura'), 'Cargando productos publicados...');
+
+    const [catsResult, prodsResult] = await Promise.all([
+      client
+        .from('categories')
+        .select('id,name,slug,active,sort_order')
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true }),
+      client
+        .from('products')
+        .select('id,category_id,name,slug,short_description,price,availability_status,publication_status,featured,plantilocura,cover_image_url,updated_at')
+        .eq('publication_status', 'published')
+        .order('updated_at', { ascending: false })
+    ]);
+
+    if (catsResult.error) {
+      setStatus($('mensajePlantilocura'), mensajeError(catsResult.error), 'error');
+      return;
+    }
+    if (prodsResult.error) {
+      setStatus($('mensajePlantilocura'), mensajeError(prodsResult.error), 'error');
+      return;
+    }
+
+    categoriasCache = catsResult.data || [];
+    productosCache = prodsResult.data || [];
+    pintarPlantilocura();
+    setStatus($('mensajePlantilocura'), productosCache.length ? '' : 'Todavía no hay productos publicados para preparar Plantilocura.');
+  }
+
+  function tarjetaPlantilocura(prod, seleccionada) {
+    const estado = textoDisponibilidad(prod.availability_status);
+    const imagen = prod.cover_image_url
+      ? `<img class="product-thumb" src="${escapeHtml(prod.cover_image_url)}" alt="" loading="lazy">`
+      : '<div class="product-thumb-placeholder" aria-hidden="true">🌸</div>';
+
+    let acciones = '';
+    if (seleccionada) {
+      acciones = `
+        ${prod.availability_status !== 'disponible' ? `<button class="btn btn-secondary" type="button" data-plantilocura-estado="disponible" data-producto-id="${escapeHtml(prod.id)}">Marcar disponible</button>` : ''}
+        ${prod.availability_status !== 'vendido' ? `<button class="btn btn-secondary" type="button" data-plantilocura-estado="vendido" data-producto-id="${escapeHtml(prod.id)}">Marcar vendido</button>` : ''}
+        <button class="btn btn-link" type="button" data-plantilocura-quitar="${escapeHtml(prod.id)}">Quitar de Plantilocura</button>`;
+    } else {
+      acciones = `<button class="btn btn-primary" type="button" data-plantilocura-agregar="${escapeHtml(prod.id)}">Agregar a Plantilocura</button>`;
+    }
+
+    return `
+      <article class="data-card plantilocura-admin-card ${seleccionada ? 'is-selected' : ''}">
+        <div class="product-card-media">
+          ${imagen}
+          <div>
+            <h3>${escapeHtml(prod.name)}</h3>
+            <div class="muted">${escapeHtml(prod.short_description || 'Sin descripción corta')}</div>
+            <div class="data-meta">
+              <span class="pill">${escapeHtml(nombreCategoria(prod.category_id))}</span>
+              <span class="pill plantilocura-status-${escapeHtml(prod.availability_status)}">${escapeHtml(estado)}</span>
+              ${seleccionada ? '<span class="pill plantilocura-pill">Plantilocura</span>' : ''}
+            </div>
+          </div>
+        </div>
+        <div class="card-actions">${acciones}</div>
+      </article>`;
+  }
+
+  function pintarPlantilocura() {
+    const activas = productosCache.filter((prod) => prod.plantilocura === true);
+    const candidatas = productosCache.filter((prod) => prod.plantilocura !== true);
+
+    $('plantilocuraSeleccionadas').textContent = activas.length;
+    $('plantilocuraDisponibles').textContent = activas.filter((prod) => prod.availability_status === 'disponible').length;
+    $('plantilocuraVendidas').textContent = activas.filter((prod) => prod.availability_status === 'vendido').length;
+
+    $('listaPlantilocuraActiva').innerHTML = activas.length
+      ? activas.map((prod) => tarjetaPlantilocura(prod, true)).join('')
+      : '<div class="empty-state">Todavía no has seleccionado piezas para Plantilocura.</div>';
+
+    $('listaPlantilocuraDisponibles').innerHTML = candidatas.length
+      ? candidatas.map((prod) => tarjetaPlantilocura(prod, false)).join('')
+      : '<div class="empty-state">Todos los productos publicados ya están seleccionados para Plantilocura.</div>';
+  }
+
+  async function actualizarPlantilocura(id, participar) {
+    if (!currentSession?.user) return;
+    const producto = productosCache.find((item) => item.id === id);
+    if (!producto) return;
+
+    setStatus($('mensajePlantilocura'), participar ? 'Agregando pieza a Plantilocura...' : 'Quitando pieza de Plantilocura...');
+    const { error } = await client
+      .from('products')
+      .update({
+        plantilocura: participar,
+        updated_by: currentSession.user.id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) {
+      setStatus($('mensajePlantilocura'), mensajeError(error), 'error');
+      return;
+    }
+
+    await cargarPlantilocura();
+    await cargarResumen();
+    setStatus($('mensajePlantilocura'), participar ? 'Pieza agregada a Plantilocura.' : 'Pieza retirada de Plantilocura.', 'success');
+  }
+
+  async function actualizarEstadoPlantilocura(id, estado) {
+    if (!currentSession?.user) return;
+    if (!['disponible', 'vendido'].includes(estado)) return;
+    const producto = productosCache.find((item) => item.id === id);
+    if (!producto) return;
+
+    const texto = estado === 'disponible' ? 'disponible' : 'vendida';
+    const confirmar = window.confirm(`¿Marcar “${producto.name}” como ${texto}?`);
+    if (!confirmar) return;
+
+    setStatus($('mensajePlantilocura'), 'Actualizando disponibilidad...');
+    const { error } = await client
+      .from('products')
+      .update({
+        availability_status: estado,
+        updated_by: currentSession.user.id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    if (error) {
+      setStatus($('mensajePlantilocura'), mensajeError(error), 'error');
+      return;
+    }
+
+    await cargarPlantilocura();
+    setStatus($('mensajePlantilocura'), `Pieza marcada como ${texto}.`, 'success');
+  }
+
   function llenarSelectCategorias(seleccion = '') {
     const select = $('productoCategoria');
     const activas = categoriasCache.filter((cat) => cat.active || cat.id === seleccion);
@@ -1228,6 +1368,24 @@
     const portadaId = event.target.closest('[data-editar-portada]')?.dataset.editarPortada;
     if (portadaId) {
       abrirPortada(portadaId);
+      return;
+    }
+
+    const agregarPlantilocura = event.target.closest('[data-plantilocura-agregar]')?.dataset.plantilocuraAgregar;
+    if (agregarPlantilocura) {
+      actualizarPlantilocura(agregarPlantilocura, true);
+      return;
+    }
+
+    const quitarPlantilocura = event.target.closest('[data-plantilocura-quitar]')?.dataset.plantilocuraQuitar;
+    if (quitarPlantilocura) {
+      actualizarPlantilocura(quitarPlantilocura, false);
+      return;
+    }
+
+    const estadoPlantilocuraBtn = event.target.closest('[data-plantilocura-estado]');
+    if (estadoPlantilocuraBtn) {
+      actualizarEstadoPlantilocura(estadoPlantilocuraBtn.dataset.productoId, estadoPlantilocuraBtn.dataset.plantilocuraEstado);
       return;
     }
 

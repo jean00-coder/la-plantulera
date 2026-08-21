@@ -101,15 +101,20 @@
     </section>
 
     <section class="seccion plantilocura" id="plantilocura">
-      <div class="contenedor plantilocura__grid">
-        <img class="plantilocura__imagen" src="img/productos/materas-ilustradas.webp" alt="Matera pintada a mano con ilustración de zorro" loading="lazy">
-        <div class="plantilocura__tarjeta">
-          <span class="etiqueta">Cada jueves 🌸</span>
-          <h2>Jueves de Plantilocura</h2>
-          <p class="descripcion-seccion">Los jueves La Plantulera intenta liberar algunas piezas ya pintadas y listas para encontrar hogar. La disponibilidad puede ser limitada y cada semana puede cambiar.</p>
-          <div class="acciones" style="margin-top:24px">
-            <a class="boton boton--dorado" data-whatsapp-plantilocura target="_blank" rel="noopener">Consultar piezas disponibles</a>
+      <div class="contenedor">
+        <div class="plantilocura__encabezado">
+          <div>
+            <span class="etiqueta">Cada jueves 🌸</span>
+            <h2>Jueves de Plantilocura</h2>
+            <p class="descripcion-seccion">Piezas ya pintadas y listas para encontrar hogar. La selección cambia y las unidades pueden agotarse rápidamente.</p>
           </div>
+          <a class="boton boton--dorado" data-whatsapp-plantilocura target="_blank" rel="noopener">Consultar por WhatsApp</a>
+        </div>
+
+        <div id="plantilocuraLista" class="plantilocura__productos" aria-live="polite"></div>
+        <div id="plantilocuraVacio" class="plantilocura__vacio">
+          <strong>La próxima Plantilocura se está preparando 🌸</strong>
+          <span>Cuando publiquemos piezas para este jueves aparecerán aquí automáticamente.</span>
         </div>
       </div>
     </section>
@@ -199,7 +204,7 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=0.3.0"></script>
-  <script src="js/app.js?v=0.3.0"></script>
+  <script src="js/config.js?v=0.6.0"></script>
+  <script src="js/app.js?v=0.6.0"></script>
 </body>
 </html>

@@ -11,6 +11,8 @@
   const vacio = document.querySelector('#estadoVacio');
   const catalogoEstado = document.querySelector('#catalogoEstado');
   const categoriasCatalogo = document.querySelector('#categoriasCatalogo');
+  const plantilocuraLista = document.querySelector('#plantilocuraLista');
+  const plantilocuraVacio = document.querySelector('#plantilocuraVacio');
   const modal = document.querySelector('#modalProducto');
   const modalImagen = document.querySelector('#modalImagen');
   const modalCategoria = document.querySelector('#modalCategoria');
@@ -113,6 +115,53 @@
       : 'Aún no hay productos publicados en esta categoría.';
   }
 
+  function mensajePlantilocura(producto) {
+    return [
+      'Hola 🌸 Vi esta pieza en Jueves de Plantilocura.',
+      '',
+      `Producto: ${producto.name}`,
+      `Código: ${codigoVisible(producto)}`,
+      '',
+      '¿Sigue disponible?'
+    ].join('\n');
+  }
+
+  function tarjetaPlantilocura(producto) {
+    const imagen = producto.cover_image_url || 'img/branding/logo.webp';
+    const categoria = producto.category?.name || 'Sin categoría';
+    const precio = precioVisible(producto.price);
+    const vendido = producto.availability_status === 'vendido';
+    const disponible = producto.availability_status === 'disponible';
+
+    return `
+      <article class="plantilocura-producto ${vendido ? 'is-sold' : ''}">
+        <button class="plantilocura-producto__imagen-btn" type="button" data-ver="${escapar(producto.id)}" aria-label="Ver detalles de ${escapar(producto.name)}">
+          <img class="plantilocura-producto__imagen" src="${escapar(imagen)}" alt="${escapar(producto.name)}" loading="lazy">
+          ${vendido ? '<span class="plantilocura-producto__sold">Vendido</span>' : ''}
+        </button>
+        <div class="plantilocura-producto__cuerpo">
+          <span class="producto__categoria">${escapar(categoria)}</span>
+          <h3>${escapar(producto.name)}</h3>
+          ${precio ? `<div class="producto__precio">${escapar(precio)}</div>` : ''}
+          <div class="plantilocura-producto__estado ${disponible ? 'is-available' : vendido ? 'is-sold' : ''}">${escapar(estadoVisible(producto.availability_status))}</div>
+          <div class="producto__acciones">
+            <button class="boton boton--secundario" type="button" data-ver="${escapar(producto.id)}">Ver detalles</button>
+            ${vendido
+              ? '<button class="boton boton--deshabilitado" type="button" disabled>Ya encontró hogar</button>'
+              : `<a class="boton boton--dorado" href="${enlaceWhatsapp(mensajePlantilocura(producto))}" target="_blank" rel="noopener">${disponible ? 'Lo quiero' : 'Consultar'}</a>`}
+          </div>
+        </div>
+      </article>`;
+  }
+
+  function renderPlantilocura() {
+    if (!plantilocuraLista || !plantilocuraVacio) return;
+    const piezas = productos.filter((producto) => producto.plantilocura === true);
+    plantilocuraLista.innerHTML = piezas.map(tarjetaPlantilocura).join('');
+    plantilocuraLista.classList.toggle('oculto', piezas.length === 0);
+    plantilocuraVacio.classList.toggle('visible', piezas.length === 0);
+  }
+
   function renderCategorias(categorias) {
     const botones = [
       '<button class="categoria-btn activo" type="button" data-categoria="Todos">Todos</button>',
@@ -153,12 +202,14 @@
       productos = Array.isArray(filasProductos) ? filasProductos : [];
       renderCategorias(Array.isArray(categorias) ? categorias : []);
       render();
+      renderPlantilocura();
       catalogoEstado.classList.add('oculto');
     } catch (error) {
       console.error('No se pudo cargar el catálogo desde Supabase:', error);
       productos = [];
       renderCategorias([]);
       render();
+      renderPlantilocura();
       catalogoEstado.textContent = 'No pudimos actualizar el catálogo en este momento. Intenta recargar la página en unos minutos.';
       catalogoEstado.classList.add('error');
     }

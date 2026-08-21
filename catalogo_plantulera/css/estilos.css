@@ -738,3 +738,88 @@ button { cursor: pointer; }
     font-size: .76rem;
   }
 }
+
+
+/* v0.6 - Jueves de Plantilocura dinámico */
+.plantilocura__encabezado {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.plantilocura__encabezado > div { max-width: 760px; }
+.plantilocura__encabezado h2 { margin: 10px 0 12px; font-size: clamp(2rem,4vw,3.4rem); font-weight: 600; }
+.plantilocura__productos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.plantilocura__productos.oculto { display: none; }
+.plantilocura-producto {
+  overflow: hidden;
+  border-radius: 24px;
+  background: rgba(255,249,245,.96);
+  border: 1px solid rgba(119,68,111,.14);
+  box-shadow: 0 14px 40px rgba(70,45,62,.08);
+}
+.plantilocura-producto__imagen-btn {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.plantilocura-producto__imagen {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+.plantilocura-producto__sold {
+  position: absolute;
+  inset: 14px 14px auto auto;
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: rgba(41,37,37,.86);
+  color: white;
+  font-size: .78rem;
+  font-weight: 800;
+}
+.plantilocura-producto.is-sold .plantilocura-producto__imagen { filter: saturate(.55) brightness(.86); }
+.plantilocura-producto__cuerpo { padding: 17px; }
+.plantilocura-producto__cuerpo h3 { margin: 7px 0 10px; font-size: 1.08rem; }
+.plantilocura-producto__estado {
+  width: fit-content;
+  margin: 10px 0 14px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(231,212,181,.42);
+  color: #6c573c;
+  font-size: .8rem;
+  font-weight: 800;
+}
+.plantilocura-producto__estado.is-available { background: rgba(214,239,222,.9); color: #326746; }
+.plantilocura-producto__estado.is-sold { background: rgba(236,226,228,.95); color: #7d4d56; }
+.boton--deshabilitado { opacity: .58; cursor: not-allowed; background: #ded7d8; color: #756e70; border-color: transparent; }
+.plantilocura__vacio {
+  display: none;
+  padding: 30px;
+  border: 1px dashed rgba(119,68,111,.26);
+  border-radius: 24px;
+  background: rgba(255,249,245,.7);
+  text-align: center;
+  color: var(--gris);
+}
+.plantilocura__vacio.visible { display: grid; gap: 8px; }
+.plantilocura__vacio strong { color: var(--negro); font-size: 1.08rem; }
+@media (max-width: 900px) {
+  .plantilocura__productos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .plantilocura__encabezado { align-items: stretch; flex-direction: column; }
+  .plantilocura__encabezado .boton { width: 100%; }
+  .plantilocura__productos { grid-template-columns: 1fr; }
+}

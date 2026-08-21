@@ -99,6 +99,10 @@
             <span class="stat-label">Publicados</span>
             <strong id="totalPublicados">—</strong>
           </article>
+          <article class="stat-card">
+            <span class="stat-label">Plantilocura</span>
+            <strong id="totalPlantilocura">—</strong>
+          </article>
         </section>
 
         <section class="grid-modulos" aria-label="Módulos del gestor">
@@ -132,12 +136,12 @@
             <p>Administrar las cuatro imágenes del carrusel.</p>
             <span class="tag tag-ready">Disponible v0.5</span>
           </button>
-          <article class="module-card">
+          <button class="module-card module-button" type="button" data-ir="plantilocura">
             <span class="module-icon">🌸</span>
             <h3>Plantilocura</h3>
-            <p>Preparar las piezas de cada jueves.</p>
-            <span class="tag">Próximamente v0.6</span>
-          </article>
+            <p>Preparar las piezas disponibles de cada jueves.</p>
+            <span class="tag tag-ready">Disponible v0.6</span>
+          </button>
           <article class="module-card">
             <span class="module-icon">💬</span>
             <h3>Clientes felices</h3>
@@ -226,6 +230,50 @@
         </div>
         <div id="mensajePortada" class="status" role="status" aria-live="polite"></div>
         <div id="listaPortada" class="carousel-admin-grid"></div>
+      </section>
+
+      <section id="vistaPlantilocura" class="vista hidden">
+        <div class="section-heading">
+          <div>
+            <button class="back-link" type="button" data-ir="inicio">← Volver</button>
+            <p class="eyebrow">MÓDULO</p>
+            <h2>Jueves de Plantilocura</h2>
+            <p class="muted">Elige productos ya publicados para la selección especial de los jueves y actualiza rápidamente si siguen disponibles o ya fueron vendidos.</p>
+          </div>
+          <a class="btn btn-secondary" href="https://la-plantulera.vercel.app/#plantilocura" target="_blank" rel="noopener">Ver Plantilocura</a>
+        </div>
+
+        <div class="notice-box workflow-note">
+          <strong>Importante:</strong> solo los productos publicados pueden aparecer en Plantilocura. Marcar una pieza aquí no cambia su publicación; únicamente la incluye o la retira de esta sección especial.
+        </div>
+
+        <section class="plantilocura-admin-summary" aria-label="Resumen de Plantilocura">
+          <article class="mini-stat"><span>Seleccionadas</span><strong id="plantilocuraSeleccionadas">—</strong></article>
+          <article class="mini-stat"><span>Disponibles</span><strong id="plantilocuraDisponibles">—</strong></article>
+          <article class="mini-stat"><span>Vendidas</span><strong id="plantilocuraVendidas">—</strong></article>
+        </section>
+
+        <div id="mensajePlantilocura" class="status" role="status" aria-live="polite"></div>
+
+        <div class="plantilocura-admin-section">
+          <div class="subheading">
+            <div>
+              <p class="eyebrow">ESTE JUEVES</p>
+              <h3>Piezas seleccionadas</h3>
+            </div>
+          </div>
+          <div id="listaPlantilocuraActiva" class="data-grid"></div>
+        </div>
+
+        <div class="plantilocura-admin-section">
+          <div class="subheading">
+            <div>
+              <p class="eyebrow">PRODUCTOS PUBLICADOS</p>
+              <h3>Agregar a Plantilocura</h3>
+            </div>
+          </div>
+          <div id="listaPlantilocuraDisponibles" class="data-grid"></div>
+        </div>
       </section>
 
       <section id="panelPortada" class="editor-overlay hidden" aria-hidden="true">
@@ -440,7 +488,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=0.5.0"></script>
-  <script src="js/app.js?v=0.5.0"></script>
+  <script src="js/config.js?v=0.6.0"></script>
+  <script src="js/app.js?v=0.6.0"></script>
 </body>
 </html>
