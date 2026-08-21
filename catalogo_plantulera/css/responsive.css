@@ -4,7 +4,7 @@
   .navegacion.abierta { display: flex; }
   .menu-movil { display: grid; place-items: center; }
   .hero__grid { grid-template-columns: 1fr; }
-  .hero__imagen-wrap { max-width: 680px; margin: 0 auto; }
+  .hero__imagen-wrap { width: 100%; max-width: 680px; margin: 0 auto; }
   .hero__imagen { aspect-ratio: 16/11; border-radius: 32px; }
   .hero__sello { left: 18px; bottom: 18px; }
 }
