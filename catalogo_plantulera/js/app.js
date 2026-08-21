@@ -18,6 +18,8 @@
   const clientesVacio = document.querySelector('#clientesVacio');
   const clientesAnterior = document.querySelector('[data-clientes-anterior]');
   const clientesSiguiente = document.querySelector('[data-clientes-siguiente]');
+  const redesLista = document.querySelector('#redesLista');
+  const redesVacio = document.querySelector('#redesVacio');
   const modal = document.querySelector('#modalProducto');
   const modalImagen = document.querySelector('#modalImagen');
   const modalCategoria = document.querySelector('#modalCategoria');
@@ -286,6 +288,70 @@
     }
   }
 
+  const textoRedSocial = (platform, texto) => {
+    const personalizado = String(texto || '').trim();
+    if (personalizado) return personalizado;
+    return {
+      instagram: 'Síguenos en Instagram',
+      tiktok: 'Mira cómo pintamos',
+      whatsapp: 'Pedidos y personalizados'
+    }[platform] || 'Visitar canal oficial';
+  };
+
+  function urlRedSegura(valor) {
+    const texto = String(valor || '').trim();
+    if (!texto) return '';
+    try {
+      const url = new URL(texto);
+      return ['https:', 'http:'].includes(url.protocol) ? url.toString() : '';
+    } catch {
+      return '';
+    }
+  }
+
+  function renderRedes(filas = []) {
+    if (!redesLista) return;
+
+    const activas = new Map();
+    (Array.isArray(filas) ? filas : []).forEach((red) => {
+      const platform = String(red.platform || '').toLowerCase();
+      const url = urlRedSegura(red.url);
+      if (!['instagram', 'tiktok', 'whatsapp'].includes(platform) || !url) return;
+      activas.set(platform, { ...red, url });
+    });
+
+    redesLista.querySelectorAll('[data-social-link]').forEach((enlace) => {
+      const platform = enlace.dataset.socialLink;
+      const red = activas.get(platform);
+      enlace.classList.toggle('oculto', !red);
+      enlace.removeAttribute('href');
+      if (!red) return;
+
+      enlace.href = red.url;
+      const texto = enlace.querySelector(`[data-social-text="${platform}"]`);
+      if (texto) texto.textContent = textoRedSocial(platform, red.display_text);
+    });
+
+    const whatsapp = activas.get('whatsapp');
+    if (whatsapp) {
+      document.querySelectorAll('[data-whatsapp-general]').forEach((enlace) => {
+        enlace.href = whatsapp.url;
+      });
+    }
+
+    redesVacio?.classList.toggle('oculto', activas.size > 0);
+  }
+
+  async function cargarRedes() {
+    try {
+      const filas = await consultaSupabase('social_links?select=platform,url,display_text,active,sort_order&active=eq.true&order=sort_order.asc');
+      renderRedes(filas);
+    } catch (error) {
+      console.error('No se pudieron cargar las redes sociales desde Supabase:', error);
+      renderRedes([]);
+    }
+  }
+
   async function cargarPortada() {
     try {
       const filas = await consultaSupabase('carousel_slides?select=id,slot,title,description,image_url,button_text,button_url,active&active=eq.true&order=slot.asc');
@@ -504,4 +570,5 @@
   cargarPortada();
   cargarCatalogo();
   cargarTestimonios();
+  cargarRedes();
 })();

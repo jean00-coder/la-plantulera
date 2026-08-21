@@ -144,13 +144,27 @@
         <div class="cabecera-seccion">
           <span class="etiqueta">Contenido y proceso</span>
           <h2 class="titulo-seccion">Síguenos y mira cómo pintamos</h2>
-          <p class="descripcion-seccion">Instagram y TikTok formarán parte del recorrido del catálogo. Los botones quedan preparados; solo falta agregar los usuarios o enlaces oficiales.</p>
+          <p class="descripcion-seccion">Encuentra aquí los canales oficiales que La Plantulera tenga activos.</p>
         </div>
 
-        <div class="redes">
-          <div class="red red--pendiente" aria-disabled="true"><strong>Instagram</strong><span>Enlace pendiente</span></div>
-          <div class="red red--pendiente" aria-disabled="true"><strong>TikTok</strong><span>Enlace pendiente</span></div>
-          <a class="red" data-whatsapp-general target="_blank" rel="noopener"><strong>WhatsApp</strong><span>Pedidos y personalizados</span></a>
+        <div class="redes" id="redesLista" aria-live="polite">
+          <a class="red oculto" data-social-link="instagram" target="_blank" rel="noopener">
+            <strong>Instagram</strong>
+            <span data-social-text="instagram">Síguenos en Instagram</span>
+          </a>
+          <a class="red oculto" data-social-link="tiktok" target="_blank" rel="noopener">
+            <strong>TikTok</strong>
+            <span data-social-text="tiktok">Mira cómo pintamos</span>
+          </a>
+          <a class="red oculto" data-social-link="whatsapp" target="_blank" rel="noopener">
+            <strong>WhatsApp</strong>
+            <span data-social-text="whatsapp">Pedidos y personalizados</span>
+          </a>
+        </div>
+
+        <div class="clientes__placeholder oculto" id="redesVacio">
+          <strong>Canales oficiales en actualización</strong>
+          Los enlaces activos aparecerán aquí automáticamente cuando se configuren desde el gestor.
         </div>
       </div>
     </section>
@@ -218,6 +232,6 @@
   </div>
 
   <script src="js/config.js?v=0.6.0"></script>
-  <script src="js/app.js?v=0.7.2"></script>
+  <script src="js/app.js?v=0.8.1"></script>
 </body>
 </html>
