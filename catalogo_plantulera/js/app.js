@@ -1,11 +1,11 @@
 (() => {
-  const WHATSAPP = '573214230922';
   const CONFIG = window.LA_PLANTULERA_CONFIG || {};
   const SUPABASE_URL = String(CONFIG.supabaseUrl || '').replace(/\/$/, '');
   const SUPABASE_KEY = String(CONFIG.supabasePublishableKey || '');
 
   let productos = [];
   let categoriaActiva = 'Todos';
+  let whatsappBaseUrl = '';
 
   const grid = document.querySelector('#gridProductos');
   const vacio = document.querySelector('#estadoVacio');
@@ -45,7 +45,16 @@
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
 
-  const enlaceWhatsapp = (mensaje) => `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+  const enlaceWhatsapp = (mensaje) => {
+    if (!whatsappBaseUrl) return '#';
+    try {
+      const url = new URL(whatsappBaseUrl);
+      url.searchParams.set('text', String(mensaje || ''));
+      return url.toString();
+    } catch {
+      return '#';
+    }
+  };
 
   const estadoVisible = (estado) => ({
     disponible: 'Disponible',
@@ -309,16 +318,39 @@
     }
   }
 
+  function actualizarEnlacesWhatsapp() {
+    document.querySelectorAll('[data-whatsapp-general]').forEach((enlace) => {
+      enlace.href = enlaceWhatsapp('Hola, vi el catálogo de La Plantulera 🌸 y quiero cotizar un regalo pintado y personalizado.');
+    });
+
+    document.querySelectorAll('[data-whatsapp-plantilocura]').forEach((enlace) => {
+      enlace.href = enlaceWhatsapp('Hola 🌸 Quiero saber qué piezas están disponibles para Jueves de Plantilocura.');
+    });
+
+    if (productos.length > 0) {
+      render();
+      renderPlantilocura();
+    }
+  }
+
   function renderRedes(filas = []) {
     if (!redesLista) return;
 
-    const activas = new Map();
+    const disponibles = new Map();
     (Array.isArray(filas) ? filas : []).forEach((red) => {
       const platform = String(red.platform || '').toLowerCase();
       const url = urlRedSegura(red.url);
       if (!['instagram', 'tiktok', 'whatsapp'].includes(platform) || !url) return;
-      activas.set(platform, { ...red, url });
+      disponibles.set(platform, { ...red, url });
     });
+
+    const whatsapp = disponibles.get('whatsapp');
+    whatsappBaseUrl = whatsapp?.url || '';
+    actualizarEnlacesWhatsapp();
+
+    const activas = new Map(
+      [...disponibles].filter(([, red]) => red.active === true)
+    );
 
     redesLista.querySelectorAll('[data-social-link]').forEach((enlace) => {
       const platform = enlace.dataset.socialLink;
@@ -332,19 +364,12 @@
       if (texto) texto.textContent = textoRedSocial(platform, red.display_text);
     });
 
-    const whatsapp = activas.get('whatsapp');
-    if (whatsapp) {
-      document.querySelectorAll('[data-whatsapp-general]').forEach((enlace) => {
-        enlace.href = whatsapp.url;
-      });
-    }
-
     redesVacio?.classList.toggle('oculto', activas.size > 0);
   }
 
   async function cargarRedes() {
     try {
-      const filas = await consultaSupabase('social_links?select=platform,url,display_text,active,sort_order&active=eq.true&order=sort_order.asc');
+      const filas = await consultaSupabase('social_links?select=platform,url,display_text,active,sort_order&order=sort_order.asc');
       renderRedes(filas);
     } catch (error) {
       console.error('No se pudieron cargar las redes sociales desde Supabase:', error);
