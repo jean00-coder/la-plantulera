@@ -13,8 +13,11 @@
   const categoriasCatalogo = document.querySelector('#categoriasCatalogo');
   const plantilocuraLista = document.querySelector('#plantilocuraLista');
   const plantilocuraVacio = document.querySelector('#plantilocuraVacio');
+  const clientesCarrusel = document.querySelector('#clientesCarrusel');
   const clientesLista = document.querySelector('#clientesLista');
   const clientesVacio = document.querySelector('#clientesVacio');
+  const clientesAnterior = document.querySelector('[data-clientes-anterior]');
+  const clientesSiguiente = document.querySelector('[data-clientes-siguiente]');
   const modal = document.querySelector('#modalProducto');
   const modalImagen = document.querySelector('#modalImagen');
   const modalCategoria = document.querySelector('#modalCategoria');
@@ -191,13 +194,28 @@
       </article>`;
   }
 
+  function actualizarControlesTestimonios(cantidad) {
+    const mostrar = Number(cantidad) > 1;
+    clientesAnterior?.classList.toggle('oculto', !mostrar);
+    clientesSiguiente?.classList.toggle('oculto', !mostrar);
+  }
+
+  function desplazarTestimonios(direccion) {
+    if (!clientesLista) return;
+    const primeraTarjeta = clientesLista.querySelector('.testimonio');
+    const anchoTarjeta = primeraTarjeta?.getBoundingClientRect().width || Math.min(clientesLista.clientWidth * 0.82, 340);
+    clientesLista.scrollBy({ left: direccion * (anchoTarjeta + 18), behavior: 'smooth' });
+  }
+
   function renderTestimonios(testimonios) {
     if (!clientesLista || !clientesVacio) return;
     const filas = Array.isArray(testimonios) ? testimonios : [];
     const tarjetas = filas.map(tarjetaTestimonio).filter(Boolean);
     clientesLista.innerHTML = tarjetas.join('');
+    clientesCarrusel?.classList.toggle('oculto', tarjetas.length === 0);
     clientesLista.classList.toggle('oculto', tarjetas.length === 0);
     clientesVacio.classList.toggle('oculto', tarjetas.length > 0);
+    actualizarControlesTestimonios(tarjetas.length);
   }
 
   async function cargarTestimonios() {
@@ -343,6 +361,9 @@
     if (modalLogo?.classList.contains('abierto')) cerrarLogo();
     else if (modal.classList.contains('abierto')) cerrarModal();
   });
+
+  clientesAnterior?.addEventListener('click', () => desplazarTestimonios(-1));
+  clientesSiguiente?.addEventListener('click', () => desplazarTestimonios(1));
 
   menuBtn.addEventListener('click', () => {
     const abierta = menu.classList.toggle('abierta');

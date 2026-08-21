@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#F3E4E1">
   <title>La Plantulera | Regalos pintados con amor</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/estilos.css?v=0.5.1">
+  <link rel="stylesheet" href="css/estilos.css?v=0.7.1">
   <link rel="stylesheet" href="css/responsive.css?v=0.1.2">
 </head>
 <body>
@@ -127,7 +127,11 @@
           <p class="descripcion-seccion">Experiencias reales compartidas por clientes de La Plantulera.</p>
         </div>
 
-        <div id="clientesLista" class="clientes__lista" aria-live="polite"></div>
+        <div class="clientes__carrusel" id="clientesCarrusel">
+          <button class="clientes__control clientes__control--anterior" type="button" data-clientes-anterior aria-label="Testimonio anterior">&lsaquo;</button>
+          <div id="clientesLista" class="clientes__lista" aria-live="polite" tabindex="0"></div>
+          <button class="clientes__control clientes__control--siguiente" type="button" data-clientes-siguiente aria-label="Testimonio siguiente">&rsaquo;</button>
+        </div>
         <div id="clientesVacio" class="clientes__placeholder">
           <strong>Pronto compartiremos experiencias reales</strong>
           Los testimonios aparecerán aquí únicamente cuando hayan sido autorizados y publicados desde el gestor.
@@ -207,6 +211,6 @@
   </div>
 
   <script src="js/config.js?v=0.6.0"></script>
-  <script src="js/app.js?v=0.6.0"></script>
+  <script src="js/app.js?v=0.7.1"></script>
 </body>
 </html>
