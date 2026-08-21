@@ -671,3 +671,70 @@ button { cursor: pointer; }
   font-size: 1rem;
   font-weight: 900;
 }
+
+/* v0.5.1 - Ajuste visual de portada/carrusel */
+/* El sello conserva su estilo, pero deja de cubrir la fotografia y el texto del carrusel. */
+.hero__sello {
+  position: static;
+  width: min(100%, 430px);
+  margin: 14px auto 0;
+  padding: 12px 16px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+.hero__sello span {
+  display: inline;
+  margin-top: 0;
+}
+
+/* Mejora la lectura del contenido sin tapar mas fotografia de la necesaria. */
+.carrusel__capa {
+  padding: 62px 24px 48px;
+}
+.carrusel__titulo,
+.carrusel__texto {
+  text-shadow: 0 2px 10px rgba(0,0,0,.42);
+}
+.carrusel__boton {
+  min-height: 36px;
+  margin-top: 11px;
+  padding: 8px 14px;
+  font-size: .8rem;
+  box-shadow: 0 8px 18px rgba(0,0,0,.16);
+}
+
+@media (max-width: 720px) {
+  .hero__sello {
+    width: calc(100% - 20px);
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    font-size: .88rem;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .hero__sello span {
+    font-size: .74rem;
+  }
+
+  .carrusel__capa {
+    padding: 54px 18px 44px;
+  }
+
+  .carrusel__texto {
+    max-width: 100%;
+    font-size: .8rem;
+  }
+
+  .carrusel__boton {
+    min-height: 34px;
+    margin-top: 9px;
+    padding: 7px 12px;
+    font-size: .76rem;
+  }
+}
