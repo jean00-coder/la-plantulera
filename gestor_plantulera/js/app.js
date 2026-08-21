@@ -39,6 +39,11 @@
   let imagenPortadaPreviewUrl = '';
   let imagenPortadaOriginalUrl = null;
   let quitarImagenPortada = false;
+  let testimoniosCache = [];
+  let imagenTestimonioBlob = null;
+  let imagenTestimonioPreviewUrl = '';
+  let imagenTestimonioOriginalUrl = null;
+  let quitarImagenTestimonio = false;
 
   function setStatus(el, texto, tipo = '') {
     if (!el) return;
@@ -79,7 +84,8 @@
       productos: $('vistaProductos'),
       revision: $('vistaRevision'),
       portada: $('vistaPortada'),
-      plantilocura: $('vistaPlantilocura')
+      plantilocura: $('vistaPlantilocura'),
+      testimonios: $('vistaTestimonios')
     };
 
     Object.entries(vistas).forEach(([key, el]) => {
@@ -92,6 +98,7 @@
     if (nombre === 'revision') cargarRevision();
     if (nombre === 'portada') cargarPortada();
     if (nombre === 'plantilocura') cargarPlantilocura();
+    if (nombre === 'testimonios') cargarTestimonios();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -369,6 +376,68 @@
   async function subirImagenPortada(slot, blob) {
     const fileName = `slide-${Date.now()}-${crearUuid().slice(0, 8)}.webp`;
     const path = `carousel/slot-${slot}/${fileName}`;
+    const { error } = await client.storage.from('catalog-media').upload(path, blob, {
+      contentType: 'image/webp',
+      cacheControl: '3600',
+      upsert: false
+    });
+    if (error) throw error;
+    const { data } = client.storage.from('catalog-media').getPublicUrl(path);
+    return { path, publicUrl: data.publicUrl };
+  }
+
+  function revocarPreviewTestimonio() {
+    if (imagenTestimonioPreviewUrl) {
+      URL.revokeObjectURL(imagenTestimonioPreviewUrl);
+      imagenTestimonioPreviewUrl = '';
+    }
+  }
+
+  function pintarPreviewImagenTestimonio(url = '') {
+    const contenedor = $('testimonioImagenPreview');
+    const img = $('testimonioImagenImg');
+    const placeholder = $('testimonioImagenPlaceholder');
+    const visibleUrl = url || (!quitarImagenTestimonio ? imagenTestimonioOriginalUrl : '');
+
+    if (visibleUrl) {
+      img.src = visibleUrl;
+      img.classList.remove('hidden');
+      placeholder.classList.add('hidden');
+      contenedor.classList.remove('empty');
+      $('btnQuitarFotoTestimonio').classList.remove('hidden');
+    } else {
+      img.removeAttribute('src');
+      img.classList.add('hidden');
+      placeholder.classList.remove('hidden');
+      contenedor.classList.add('empty');
+      $('btnQuitarFotoTestimonio').classList.add('hidden');
+    }
+  }
+
+  async function seleccionarImagenTestimonio(file) {
+    if (!file) return;
+    setStatus($('mensajeImagenTestimonio'), 'Optimizando imagen...');
+    try {
+      const originalSize = file.size;
+      const optimizada = await optimizarImagen(file);
+      revocarPreviewTestimonio();
+      imagenTestimonioBlob = optimizada.blob;
+      imagenTestimonioPreviewUrl = URL.createObjectURL(optimizada.blob);
+      quitarImagenTestimonio = false;
+      pintarPreviewImagenTestimonio(imagenTestimonioPreviewUrl);
+      setStatus(
+        $('mensajeImagenTestimonio'),
+        `Lista: ${optimizada.width}×${optimizada.height}px · ${formatoBytes(originalSize)} → ${formatoBytes(optimizada.blob.size)}`,
+        'success'
+      );
+    } catch (error) {
+      setStatus($('mensajeImagenTestimonio'), mensajeError(error), 'error');
+    }
+  }
+
+  async function subirImagenTestimonio(testimonioId, blob) {
+    const fileName = `testimonial-${Date.now()}-${crearUuid().slice(0, 8)}.webp`;
+    const path = `testimonials/${testimonioId}/${fileName}`;
     const { error } = await client.storage.from('catalog-media').upload(path, blob, {
       contentType: 'image/webp',
       cacheControl: '3600',
@@ -1053,6 +1122,168 @@
     setStatus($('mensajePlantilocura'), `Pieza marcada como ${texto}.`, 'success');
   }
 
+  async function cargarTestimonios() {
+    setStatus($('mensajeTestimonios'), 'Cargando testimonios...');
+    const { data, error } = await client
+      .from('testimonials')
+      .select('id,client_name,comment,photo_url,rating,visible,sort_order,created_at,updated_at')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      setStatus($('mensajeTestimonios'), mensajeError(error), 'error');
+      return;
+    }
+
+    testimoniosCache = data || [];
+    pintarTestimonios();
+    setStatus($('mensajeTestimonios'), testimoniosCache.length ? '' : 'Todavía no hay testimonios. Pulsa “Nuevo testimonio” para crear el primero.');
+  }
+
+  function pintarTestimonios() {
+    const contenedor = $('listaTestimonios');
+    if (!testimoniosCache.length) {
+      contenedor.innerHTML = '<div class="empty-state">No hay testimonios todavía. Crea uno de prueba y déjalo oculto para validar el gestor.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = testimoniosCache.map((testimonio) => {
+      const foto = testimonio.photo_url
+        ? `<img class="product-thumb" src="${escapeHtml(testimonio.photo_url)}" alt="Foto de ${escapeHtml(testimonio.client_name)}">`
+        : '<div class="product-thumb-placeholder" aria-hidden="true">💬</div>';
+      const estrellas = testimonio.rating ? `${'★'.repeat(Number(testimonio.rating))} · ` : '';
+      const visibilidad = testimonio.visible ? 'Visible en catálogo' : 'Oculto';
+
+      return `
+        <article class="data-card">
+          <div class="product-card-media">
+            ${foto}
+            <div>
+              <h3>${escapeHtml(testimonio.client_name)}</h3>
+              <p class="muted">${escapeHtml(testimonio.comment)}</p>
+              <div class="data-meta">
+                <span class="pill ${testimonio.visible ? 'status-published' : 'off'}">${visibilidad}</span>
+                ${testimonio.rating ? `<span class="pill">${estrellas}${escapeHtml(testimonio.rating)}/5</span>` : '<span class="pill off">Sin puntuación</span>'}
+                <span class="pill off">Orden ${escapeHtml(testimonio.sort_order ?? 0)}</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-secondary" type="button" data-editar-testimonio="${escapeHtml(testimonio.id)}">Editar</button>
+          </div>
+        </article>`;
+    }).join('');
+  }
+
+  function abrirTestimonio(id = '') {
+    const testimonio = testimoniosCache.find((item) => item.id === id);
+
+    $('testimonioId').value = testimonio?.id || '';
+    $('testimonioNombre').value = testimonio?.client_name || '';
+    $('testimonioComentario').value = testimonio?.comment || '';
+    $('testimonioPuntuacion').value = testimonio?.rating ? String(testimonio.rating) : '';
+    $('testimonioOrden').value = Number.isFinite(Number(testimonio?.sort_order)) ? String(testimonio?.sort_order ?? 0) : '0';
+    $('testimonioVisible').checked = Boolean(testimonio?.visible);
+    $('testimonioImagenCamara').value = '';
+    $('testimonioImagenGaleria').value = '';
+
+    revocarPreviewTestimonio();
+    imagenTestimonioBlob = null;
+    imagenTestimonioOriginalUrl = testimonio?.photo_url || null;
+    quitarImagenTestimonio = false;
+    pintarPreviewImagenTestimonio();
+    setStatus($('mensajeImagenTestimonio'), imagenTestimonioOriginalUrl ? 'Foto actual cargada.' : '');
+    $('tituloTestimonio').textContent = testimonio ? 'Editar testimonio' : 'Nuevo testimonio';
+    setStatus($('mensajeFormTestimonio'), '');
+    abrirEditor($('panelTestimonio'));
+  }
+
+  async function guardarTestimonio(event) {
+    event.preventDefault();
+    if (!currentSession?.user) return;
+
+    const idActual = $('testimonioId').value;
+    const existente = testimoniosCache.find((item) => item.id === idActual);
+    const testimonioId = idActual || crearUuid();
+    const puntuacionTexto = $('testimonioPuntuacion').value;
+    const orden = Number($('testimonioOrden').value || 0);
+
+    const payload = {
+      client_name: $('testimonioNombre').value.trim(),
+      comment: $('testimonioComentario').value.trim(),
+      rating: puntuacionTexto === '' ? null : Number(puntuacionTexto),
+      visible: $('testimonioVisible').checked,
+      sort_order: orden,
+      updated_by: currentSession.user.id,
+      updated_at: new Date().toISOString()
+    };
+
+    if (!payload.client_name || !payload.comment) {
+      setStatus($('mensajeFormTestimonio'), 'Nombre o iniciales y comentario son obligatorios.', 'error');
+      return;
+    }
+
+    if (payload.rating !== null && (!Number.isInteger(payload.rating) || payload.rating < 1 || payload.rating > 5)) {
+      setStatus($('mensajeFormTestimonio'), 'La puntuación debe estar entre 1 y 5 estrellas o dejarse vacía.', 'error');
+      return;
+    }
+
+    if (!Number.isInteger(payload.sort_order) || payload.sort_order < 0) {
+      setStatus($('mensajeFormTestimonio'), 'El orden debe ser un número entero igual o mayor que 0.', 'error');
+      return;
+    }
+
+    if (!idActual) {
+      payload.id = testimonioId;
+      payload.created_by = currentSession.user.id;
+    }
+
+    $('btnGuardarTestimonio').disabled = true;
+    setStatus($('mensajeFormTestimonio'), imagenTestimonioBlob ? 'Subiendo foto optimizada...' : 'Guardando testimonio...');
+
+    let nuevaImagen = null;
+    const imagenAnterior = existente?.photo_url || null;
+
+    try {
+      if (imagenTestimonioBlob) {
+        nuevaImagen = await subirImagenTestimonio(testimonioId, imagenTestimonioBlob);
+        payload.photo_url = nuevaImagen.publicUrl;
+      } else if (quitarImagenTestimonio) {
+        payload.photo_url = null;
+      }
+
+      const query = idActual
+        ? client.from('testimonials').update(payload).eq('id', idActual)
+        : client.from('testimonials').insert(payload);
+
+      const { error } = await query;
+      if (error) throw error;
+
+      if ((nuevaImagen || quitarImagenTestimonio) && imagenAnterior) {
+        await borrarImagenStorage(imagenAnterior);
+      }
+
+      revocarPreviewTestimonio();
+      imagenTestimonioBlob = null;
+      imagenTestimonioOriginalUrl = null;
+      quitarImagenTestimonio = false;
+      cerrarEditores();
+      await cargarTestimonios();
+      setStatus(
+        $('mensajeTestimonios'),
+        payload.visible ? 'Testimonio guardado y marcado como visible.' : 'Testimonio guardado como oculto.',
+        'success'
+      );
+    } catch (error) {
+      if (nuevaImagen?.path) {
+        await client.storage.from('catalog-media').remove([nuevaImagen.path]);
+      }
+      setStatus($('mensajeFormTestimonio'), mensajeError(error), 'error');
+    } finally {
+      $('btnGuardarTestimonio').disabled = false;
+    }
+  }
+
   function llenarSelectCategorias(seleccion = '') {
     const select = $('productoCategoria');
     const activas = categoriasCache.filter((cat) => cat.active || cat.id === seleccion);
@@ -1222,7 +1453,11 @@
     imagenPortadaBlob = null;
     imagenPortadaOriginalUrl = null;
     quitarImagenPortada = false;
-    [$('panelCategoria'), $('panelProducto'), $('panelPortada')].forEach((panel) => {
+    revocarPreviewTestimonio();
+    imagenTestimonioBlob = null;
+    imagenTestimonioOriginalUrl = null;
+    quitarImagenTestimonio = false;
+    [$('panelCategoria'), $('panelProducto'), $('panelPortada'), $('panelTestimonio')].forEach((panel) => {
       panel.classList.add('hidden');
       panel.setAttribute('aria-hidden', 'true');
     });
@@ -1315,9 +1550,11 @@
   $('btnInicio').addEventListener('click', () => mostrarVista('inicio'));
   $('btnNuevaCategoria').addEventListener('click', () => abrirCategoria());
   $('btnNuevoProducto').addEventListener('click', () => abrirProducto());
+  $('btnNuevoTestimonio').addEventListener('click', () => abrirTestimonio());
   $('formCategoria').addEventListener('submit', guardarCategoria);
   $('formProducto').addEventListener('submit', guardarProducto);
   $('formPortada').addEventListener('submit', guardarPortada);
+  $('formTestimonio').addEventListener('submit', guardarTestimonio);
   $('btnTomarFoto').addEventListener('click', () => $('productoImagenCamara').click());
   $('btnElegirFoto').addEventListener('click', () => $('productoImagenGaleria').click());
   $('productoImagenCamara').addEventListener('change', (event) => seleccionarImagenProducto(event.target.files?.[0]));
@@ -1326,6 +1563,10 @@
   $('btnElegirFotoPortada').addEventListener('click', () => $('portadaImagenGaleria').click());
   $('portadaImagenCamara').addEventListener('change', (event) => seleccionarImagenPortada(event.target.files?.[0]));
   $('portadaImagenGaleria').addEventListener('change', (event) => seleccionarImagenPortada(event.target.files?.[0]));
+  $('btnTomarFotoTestimonio').addEventListener('click', () => $('testimonioImagenCamara').click());
+  $('btnElegirFotoTestimonio').addEventListener('click', () => $('testimonioImagenGaleria').click());
+  $('testimonioImagenCamara').addEventListener('change', (event) => seleccionarImagenTestimonio(event.target.files?.[0]));
+  $('testimonioImagenGaleria').addEventListener('change', (event) => seleccionarImagenTestimonio(event.target.files?.[0]));
   $('btnQuitarFoto').addEventListener('click', () => {
     revocarPreviewTemporal();
     imagenProductoBlob = null;
@@ -1350,6 +1591,20 @@
     setStatus(
       $('mensajeImagenPortada'),
       quitarImagenPortada ? 'La imagen se quitará cuando guardes los cambios.' : 'Imagen seleccionada eliminada.',
+      ''
+    );
+  });
+
+  $('btnQuitarFotoTestimonio').addEventListener('click', () => {
+    revocarPreviewTestimonio();
+    imagenTestimonioBlob = null;
+    quitarImagenTestimonio = Boolean(imagenTestimonioOriginalUrl);
+    $('testimonioImagenCamara').value = '';
+    $('testimonioImagenGaleria').value = '';
+    pintarPreviewImagenTestimonio('');
+    setStatus(
+      $('mensajeImagenTestimonio'),
+      quitarImagenTestimonio ? 'La foto se quitará cuando guardes el testimonio.' : 'Foto seleccionada eliminada.',
       ''
     );
   });
@@ -1397,6 +1652,12 @@
     const estadoPlantilocuraBtn = event.target.closest('[data-plantilocura-estado]');
     if (estadoPlantilocuraBtn) {
       actualizarEstadoPlantilocura(estadoPlantilocuraBtn.dataset.productoId, estadoPlantilocuraBtn.dataset.plantilocuraEstado);
+      return;
+    }
+
+    const testimonioId = event.target.closest('[data-editar-testimonio]')?.dataset.editarTestimonio;
+    if (testimonioId) {
+      abrirTestimonio(testimonioId);
       return;
     }
 

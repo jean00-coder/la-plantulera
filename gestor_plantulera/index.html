@@ -142,12 +142,12 @@
             <p>Preparar las piezas disponibles de cada jueves.</p>
             <span class="tag tag-ready">Disponible v0.6</span>
           </button>
-          <article class="module-card">
+          <button class="module-card module-button" type="button" data-ir="testimonios">
             <span class="module-icon">💬</span>
             <h3>Clientes felices</h3>
             <p>Testimonios reales de clientes.</p>
-            <span class="tag">Próximamente v0.7</span>
-          </article>
+            <span class="tag">En prueba v0.7</span>
+          </button>
           <article class="module-card">
             <span class="module-icon">📱</span>
             <h3>Redes sociales</h3>
@@ -276,6 +276,24 @@
         </div>
       </section>
 
+      <section id="vistaTestimonios" class="vista hidden">
+        <div class="section-heading">
+          <div>
+            <button class="back-link" type="button" data-ir="inicio">← Volver</button>
+            <p class="eyebrow">MÓDULO</p>
+            <h2>Clientes felices</h2>
+            <p class="muted">Administra únicamente testimonios reales y autorizados. Los registros nuevos se crean ocultos hasta que decidas mostrarlos.</p>
+          </div>
+          <button id="btnNuevoTestimonio" class="btn btn-primary" type="button">+ Nuevo testimonio</button>
+        </div>
+
+        <div class="notice-box workflow-note">
+          <strong>Importante:</strong> no inventamos reseñas. La foto y la puntuación son opcionales, y puedes mantener cualquier testimonio oculto sin borrarlo.
+        </div>
+        <div id="mensajeTestimonios" class="status" role="status" aria-live="polite"></div>
+        <div id="listaTestimonios" class="data-grid"></div>
+      </section>
+
       <section id="panelPortada" class="editor-overlay hidden" aria-hidden="true">
         <form id="formPortada" class="editor-card editor-card-wide panel" novalidate>
           <div class="editor-header">
@@ -344,6 +362,87 @@
             <button id="btnGuardarPortada" class="btn btn-primary" type="submit">Guardar cambios</button>
           </div>
           <p id="mensajeFormPortada" class="status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section id="panelTestimonio" class="editor-overlay hidden" aria-hidden="true">
+        <form id="formTestimonio" class="editor-card editor-card-wide panel" novalidate>
+          <div class="editor-header">
+            <div>
+              <p class="eyebrow">TESTIMONIO</p>
+              <h2 id="tituloTestimonio">Nuevo testimonio</h2>
+            </div>
+            <button class="icon-button" type="button" data-cerrar-editor aria-label="Cerrar">✕</button>
+          </div>
+
+          <input id="testimonioId" type="hidden">
+
+          <label for="testimonioNombre">Nombre o iniciales *</label>
+          <input id="testimonioNombre" type="text" maxlength="100" required placeholder="Ej. Laura M. o L.M.">
+
+          <label for="testimonioComentario">Comentario *</label>
+          <textarea id="testimonioComentario" rows="5" maxlength="800" required placeholder="Escribe exactamente el comentario autorizado por el cliente"></textarea>
+
+          <div class="form-grid">
+            <div>
+              <label for="testimonioPuntuacion">Puntuación (opcional)</label>
+              <select id="testimonioPuntuacion">
+                <option value="">Sin puntuación</option>
+                <option value="5">5 estrellas</option>
+                <option value="4">4 estrellas</option>
+                <option value="3">3 estrellas</option>
+                <option value="2">2 estrellas</option>
+                <option value="1">1 estrella</option>
+              </select>
+            </div>
+            <div>
+              <label for="testimonioOrden">Orden</label>
+              <input id="testimonioOrden" type="number" min="0" step="1" value="0" inputmode="numeric">
+              <p class="field-help">Los números menores aparecen primero.</p>
+            </div>
+          </div>
+
+          <label class="check-row">
+            <input id="testimonioVisible" type="checkbox">
+            <span>Mostrar en el catálogo</span>
+          </label>
+
+          <section class="image-uploader" aria-labelledby="tituloFotoTestimonio">
+            <div class="image-uploader-head">
+              <div>
+                <p class="eyebrow">FOTOGRAFÍA OPCIONAL</p>
+                <h3 id="tituloFotoTestimonio">Foto del testimonio</h3>
+                <p class="muted">Puedes tomar una foto con el celular o elegirla desde la galería. Se optimiza a WebP antes de subirla.</p>
+              </div>
+            </div>
+
+            <div class="image-uploader-grid">
+              <div id="testimonioImagenPreview" class="image-preview empty" aria-live="polite">
+                <span id="testimonioImagenPlaceholder">Sin foto</span>
+                <img id="testimonioImagenImg" class="hidden" alt="Vista previa de la foto del testimonio">
+              </div>
+
+              <div class="image-controls">
+                <input id="testimonioImagenCamara" class="file-input-hidden" type="file" accept="image/*" capture="environment">
+                <input id="testimonioImagenGaleria" class="file-input-hidden" type="file" accept="image/*">
+                <button id="btnTomarFotoTestimonio" class="btn btn-secondary" type="button">📷 Tomar foto</button>
+                <button id="btnElegirFotoTestimonio" class="btn btn-secondary" type="button">🖼️ Elegir de galería</button>
+                <button id="btnQuitarFotoTestimonio" class="btn btn-link hidden" type="button">Quitar foto</button>
+                <p class="field-help">Máximo 10 MB. Se reduce a un máximo de 1600 px sin ampliarla y se guarda en WebP.</p>
+                <p id="mensajeImagenTestimonio" class="status" role="status" aria-live="polite"></p>
+              </div>
+            </div>
+          </section>
+
+          <div class="notice-box">
+            <strong>Privacidad:</strong> guarda únicamente nombres, iniciales, comentarios y fotografías que tengas autorización para publicar.
+          </div>
+
+          <div class="editor-actions">
+            <button class="btn btn-secondary" type="button" data-cerrar-editor>Cancelar</button>
+            <button id="btnGuardarTestimonio" class="btn btn-primary" type="submit">Guardar testimonio</button>
+          </div>
+          <p id="mensajeFormTestimonio" class="status" role="status" aria-live="polite"></p>
         </form>
       </section>
 
@@ -489,6 +588,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=0.6.0"></script>
-  <script src="js/app.js?v=0.6.1"></script>
+  <script src="js/app.js?v=0.7.0"></script>
 </body>
 </html>
