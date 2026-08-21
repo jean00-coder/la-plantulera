@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#F3E4E1">
   <title>La Plantulera | Gestor</title>
-  <link rel="stylesheet" href="css/estilos.css?v=0.4.0">
+  <link rel="stylesheet" href="css/estilos.css?v=0.5.0">
 </head>
 <body>
   <main class="app-shell">
@@ -126,12 +126,12 @@
             <p>Aprueba borradores antes de hacerlos públicos.</p>
             <span class="tag tag-ready">Disponible v0.4</span>
           </button>
-          <article class="module-card">
+          <button class="module-card module-button" type="button" data-ir="portada">
             <span class="module-icon">🖼️</span>
             <h3>Portada</h3>
             <p>Administrar las cuatro imágenes del carrusel.</p>
-            <span class="tag">Próximamente v0.5</span>
-          </article>
+            <span class="tag tag-ready">Disponible v0.5</span>
+          </button>
           <article class="module-card">
             <span class="module-icon">🌸</span>
             <h3>Plantilocura</h3>
@@ -204,10 +204,99 @@
         </div>
 
         <div class="notice-box workflow-note">
-          <strong>Importante:</strong> en v0.4 el producto queda marcado como publicado en Supabase. El catálogo público todavía es estático; lo conectaremos a estos datos en la siguiente etapa de integración.
+          <strong>Catálogo conectado:</strong> al publicar, el producto queda visible automáticamente en el catálogo público.
         </div>
         <div id="mensajeRevision" class="status" role="status" aria-live="polite"></div>
         <div id="listaRevision" class="data-grid"></div>
+      </section>
+
+      <section id="vistaPortada" class="vista hidden">
+        <div class="section-heading">
+          <div>
+            <button class="back-link" type="button" data-ir="inicio">← Volver</button>
+            <p class="eyebrow">MÓDULO</p>
+            <h2>Portada / Carrusel</h2>
+            <p class="muted">Edita las cuatro diapositivas que aparecen en la portada del catálogo. Los cambios se reflejan automáticamente.</p>
+          </div>
+          <a class="btn btn-secondary" href="https://la-plantulera.vercel.app/" target="_blank" rel="noopener">Ver catálogo</a>
+        </div>
+
+        <div class="notice-box workflow-note">
+          Puedes cambiar imagen, título, texto, botón y activar o desactivar cada diapositiva. La imagen se optimiza a WebP antes de subirla.
+        </div>
+        <div id="mensajePortada" class="status" role="status" aria-live="polite"></div>
+        <div id="listaPortada" class="carousel-admin-grid"></div>
+      </section>
+
+      <section id="panelPortada" class="editor-overlay hidden" aria-hidden="true">
+        <form id="formPortada" class="editor-card editor-card-wide panel" novalidate>
+          <div class="editor-header">
+            <div>
+              <p class="eyebrow">PORTADA</p>
+              <h2 id="tituloPortadaEditor">Editar diapositiva</h2>
+            </div>
+            <button class="icon-button" type="button" data-cerrar-editor aria-label="Cerrar">✕</button>
+          </div>
+
+          <input id="portadaId" type="hidden">
+          <input id="portadaSlot" type="hidden">
+
+          <div class="form-grid">
+            <div>
+              <label for="portadaTitulo">Título *</label>
+              <input id="portadaTitulo" type="text" maxlength="120" required placeholder="Ej. Materas personalizadas">
+            </div>
+            <div>
+              <label for="portadaBotonTexto">Texto del botón</label>
+              <input id="portadaBotonTexto" type="text" maxlength="60" placeholder="Ej. Ver materas">
+            </div>
+          </div>
+
+          <label for="portadaDescripcion">Texto corto</label>
+          <textarea id="portadaDescripcion" rows="3" maxlength="260" placeholder="Una frase breve para acompañar la imagen"></textarea>
+
+          <label for="portadaBotonUrl">Destino del botón</label>
+          <input id="portadaBotonUrl" type="text" maxlength="300" placeholder="#catalogo o https://...">
+          <p class="field-help">Puedes usar una sección del catálogo como #catalogo o una URL completa.</p>
+
+          <label class="check-row">
+            <input id="portadaActiva" type="checkbox" checked>
+            <span>Diapositiva activa</span>
+          </label>
+
+          <section class="image-uploader" aria-labelledby="tituloFotoPortada">
+            <div class="image-uploader-head">
+              <div>
+                <p class="eyebrow">IMAGEN</p>
+                <h3 id="tituloFotoPortada">Imagen del carrusel</h3>
+                <p class="muted">Toma una foto o elige una imagen. Se optimiza automáticamente a WebP.</p>
+              </div>
+            </div>
+
+            <div class="image-uploader-grid carousel-image-grid">
+              <div id="portadaImagenPreview" class="image-preview carousel-preview empty" aria-live="polite">
+                <span id="portadaImagenPlaceholder">Sin imagen</span>
+                <img id="portadaImagenImg" class="hidden" alt="Vista previa de la imagen del carrusel">
+              </div>
+
+              <div class="image-controls">
+                <input id="portadaImagenCamara" class="file-input-hidden" type="file" accept="image/*" capture="environment">
+                <input id="portadaImagenGaleria" class="file-input-hidden" type="file" accept="image/*">
+                <button id="btnTomarFotoPortada" class="btn btn-secondary" type="button">📷 Tomar foto</button>
+                <button id="btnElegirFotoPortada" class="btn btn-secondary" type="button">🖼️ Elegir de galería</button>
+                <button id="btnQuitarFotoPortada" class="btn btn-link hidden" type="button">Quitar imagen</button>
+                <p class="field-help">Máximo 10 MB. Se reduce a un máximo de 1600 px y se guarda en WebP.</p>
+                <p id="mensajeImagenPortada" class="status" role="status" aria-live="polite"></p>
+              </div>
+            </div>
+          </section>
+
+          <div class="editor-actions">
+            <button class="btn btn-secondary" type="button" data-cerrar-editor>Cancelar</button>
+            <button id="btnGuardarPortada" class="btn btn-primary" type="submit">Guardar cambios</button>
+          </div>
+          <p id="mensajeFormPortada" class="status" role="status" aria-live="polite"></p>
+        </form>
       </section>
 
       <section id="panelCategoria" class="editor-overlay hidden" aria-hidden="true">
@@ -351,7 +440,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=0.4.0"></script>
-  <script src="js/app.js?v=0.4.0"></script>
+  <script src="js/config.js?v=0.5.0"></script>
+  <script src="js/app.js?v=0.5.0"></script>
 </body>
 </html>

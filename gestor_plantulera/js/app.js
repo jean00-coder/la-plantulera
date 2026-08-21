@@ -7,6 +7,8 @@
     return;
   }
 
+  const CATALOG_URL = String(cfg.catalogUrl || 'https://la-plantulera.vercel.app').replace(/\/$/, '');
+
   const client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey, {
     auth: {
       persistSession: true,
@@ -32,6 +34,11 @@
   let imagenProductoPreviewUrl = '';
   let imagenProductoOriginalUrl = null;
   let quitarImagenProducto = false;
+  let portadaCache = [];
+  let imagenPortadaBlob = null;
+  let imagenPortadaPreviewUrl = '';
+  let imagenPortadaOriginalUrl = null;
+  let quitarImagenPortada = false;
 
   function setStatus(el, texto, tipo = '') {
     if (!el) return;
@@ -70,7 +77,8 @@
       inicio: $('vistaInicio'),
       categorias: $('vistaCategorias'),
       productos: $('vistaProductos'),
-      revision: $('vistaRevision')
+      revision: $('vistaRevision'),
+      portada: $('vistaPortada')
     };
 
     Object.entries(vistas).forEach(([key, el]) => {
@@ -81,6 +89,7 @@
     if (nombre === 'categorias') cargarCategorias();
     if (nombre === 'productos') cargarProductos();
     if (nombre === 'revision') cargarRevision();
+    if (nombre === 'portada') cargarPortada();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -287,6 +296,219 @@
     if (!path) return;
     const { error } = await client.storage.from('catalog-media').remove([path]);
     if (error) console.warn('No se pudo borrar la imagen anterior:', error.message);
+  }
+
+  function resolverImagenPortada(url) {
+    const value = String(url || '').trim();
+    if (!value) return '';
+    if (/^https?:\/\//i.test(value)) return value;
+    if (value.startsWith('/')) return `${CATALOG_URL}${value}`;
+    return value;
+  }
+
+  function revocarPreviewPortada() {
+    if (imagenPortadaPreviewUrl) {
+      URL.revokeObjectURL(imagenPortadaPreviewUrl);
+      imagenPortadaPreviewUrl = '';
+    }
+  }
+
+  function pintarPreviewImagenPortada(url = '') {
+    const contenedor = $('portadaImagenPreview');
+    const img = $('portadaImagenImg');
+    const placeholder = $('portadaImagenPlaceholder');
+    const original = !quitarImagenPortada ? resolverImagenPortada(imagenPortadaOriginalUrl) : '';
+    const visibleUrl = url || original;
+
+    if (visibleUrl) {
+      img.src = visibleUrl;
+      img.classList.remove('hidden');
+      placeholder.classList.add('hidden');
+      contenedor.classList.remove('empty');
+      $('btnQuitarFotoPortada').classList.remove('hidden');
+    } else {
+      img.removeAttribute('src');
+      img.classList.add('hidden');
+      placeholder.classList.remove('hidden');
+      contenedor.classList.add('empty');
+      $('btnQuitarFotoPortada').classList.add('hidden');
+    }
+  }
+
+  async function seleccionarImagenPortada(file) {
+    if (!file) return;
+    setStatus($('mensajeImagenPortada'), 'Optimizando imagen...');
+    try {
+      const originalSize = file.size;
+      const optimizada = await optimizarImagen(file);
+      revocarPreviewPortada();
+      imagenPortadaBlob = optimizada.blob;
+      imagenPortadaPreviewUrl = URL.createObjectURL(optimizada.blob);
+      quitarImagenPortada = false;
+      pintarPreviewImagenPortada(imagenPortadaPreviewUrl);
+      setStatus(
+        $('mensajeImagenPortada'),
+        `Lista: ${optimizada.width}×${optimizada.height}px · ${formatoBytes(originalSize)} → ${formatoBytes(optimizada.blob.size)}`,
+        'success'
+      );
+    } catch (error) {
+      setStatus($('mensajeImagenPortada'), mensajeError(error), 'error');
+    }
+  }
+
+  async function subirImagenPortada(slot, blob) {
+    const fileName = `slide-${Date.now()}-${crearUuid().slice(0, 8)}.webp`;
+    const path = `carousel/slot-${slot}/${fileName}`;
+    const { error } = await client.storage.from('catalog-media').upload(path, blob, {
+      contentType: 'image/webp',
+      cacheControl: '3600',
+      upsert: false
+    });
+    if (error) throw error;
+    const { data } = client.storage.from('catalog-media').getPublicUrl(path);
+    return { path, publicUrl: data.publicUrl };
+  }
+
+  async function cargarPortada() {
+    setStatus($('mensajePortada'), 'Cargando carrusel...');
+    const { data, error } = await client
+      .from('carousel_slides')
+      .select('id,slot,title,description,image_url,button_text,button_url,active,created_at,updated_at')
+      .order('slot', { ascending: true });
+
+    if (error) {
+      setStatus($('mensajePortada'), mensajeError(error), 'error');
+      return;
+    }
+
+    portadaCache = data || [];
+    pintarPortada();
+    setStatus($('mensajePortada'), portadaCache.length ? '' : 'No hay diapositivas configuradas.');
+  }
+
+  function pintarPortada() {
+    const contenedor = $('listaPortada');
+    if (!portadaCache.length) {
+      contenedor.innerHTML = '<div class="empty-state">No hay diapositivas configuradas.</div>';
+      return;
+    }
+
+    contenedor.innerHTML = portadaCache.map((slide) => {
+      const imagen = resolverImagenPortada(slide.image_url);
+      return `
+        <article class="data-card carousel-admin-card">
+          <div class="carousel-admin-media">
+            ${imagen
+              ? `<img src="${escapeHtml(imagen)}" alt="" loading="lazy">`
+              : '<div class="carousel-admin-placeholder" aria-hidden="true">🖼️</div>'}
+          </div>
+          <div class="carousel-admin-body">
+            <span class="carousel-slot">Diapositiva ${escapeHtml(slide.slot)}</span>
+            <h3>${escapeHtml(slide.title || 'Sin título')}</h3>
+            <div class="muted">${escapeHtml(slide.description || 'Sin texto corto')}</div>
+            <div class="data-meta">
+              <span class="pill ${slide.active ? '' : 'off'}">${slide.active ? 'Activa' : 'Inactiva'}</span>
+              ${slide.button_text ? `<span class="pill">Botón: ${escapeHtml(slide.button_text)}</span>` : ''}
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-secondary" type="button" data-editar-portada="${escapeHtml(slide.id)}">Editar</button>
+            </div>
+          </div>
+        </article>`;
+    }).join('');
+  }
+
+  function abrirPortada(id) {
+    const slide = portadaCache.find((item) => item.id === id);
+    if (!slide) {
+      setStatus($('mensajePortada'), 'No se encontró la diapositiva.', 'error');
+      return;
+    }
+
+    $('portadaId').value = slide.id;
+    $('portadaSlot').value = slide.slot;
+    $('portadaTitulo').value = slide.title || '';
+    $('portadaDescripcion').value = slide.description || '';
+    $('portadaBotonTexto').value = slide.button_text || '';
+    $('portadaBotonUrl').value = slide.button_url === '#productos' ? '#catalogo' : (slide.button_url || '');
+    $('portadaActiva').checked = Boolean(slide.active);
+    $('tituloPortadaEditor').textContent = `Editar diapositiva ${slide.slot}`;
+    $('portadaImagenCamara').value = '';
+    $('portadaImagenGaleria').value = '';
+    revocarPreviewPortada();
+    imagenPortadaBlob = null;
+    imagenPortadaOriginalUrl = slide.image_url || null;
+    quitarImagenPortada = false;
+    pintarPreviewImagenPortada();
+    setStatus($('mensajeImagenPortada'), imagenPortadaOriginalUrl ? 'Imagen actual cargada.' : '');
+    setStatus($('mensajeFormPortada'), '');
+    abrirEditor($('panelPortada'));
+  }
+
+  async function guardarPortada(event) {
+    event.preventDefault();
+    if (!currentSession?.user) return;
+
+    const id = $('portadaId').value;
+    const slot = Number($('portadaSlot').value);
+    const slideActual = portadaCache.find((item) => item.id === id);
+    if (!id || !slideActual) {
+      setStatus($('mensajeFormPortada'), 'No se encontró la diapositiva.', 'error');
+      return;
+    }
+
+    const title = $('portadaTitulo').value.trim();
+    if (!title) {
+      setStatus($('mensajeFormPortada'), 'El título es obligatorio.', 'error');
+      return;
+    }
+
+    const payload = {
+      title,
+      description: $('portadaDescripcion').value.trim() || null,
+      button_text: $('portadaBotonTexto').value.trim() || null,
+      button_url: $('portadaBotonUrl').value.trim() || null,
+      active: $('portadaActiva').checked,
+      updated_by: currentSession.user.id,
+      updated_at: new Date().toISOString()
+    };
+
+    $('btnGuardarPortada').disabled = true;
+    setStatus($('mensajeFormPortada'), imagenPortadaBlob ? 'Subiendo imagen optimizada...' : 'Guardando cambios...');
+
+    let nuevaImagen = null;
+    const imagenAnterior = slideActual.image_url || null;
+
+    try {
+      if (imagenPortadaBlob) {
+        nuevaImagen = await subirImagenPortada(slot, imagenPortadaBlob);
+        payload.image_url = nuevaImagen.publicUrl;
+      } else if (quitarImagenPortada) {
+        payload.image_url = null;
+      }
+
+      const { error } = await client.from('carousel_slides').update(payload).eq('id', id);
+      if (error) throw error;
+
+      if ((nuevaImagen || quitarImagenPortada) && imagenAnterior) {
+        await borrarImagenStorage(imagenAnterior);
+      }
+
+      revocarPreviewPortada();
+      imagenPortadaBlob = null;
+      imagenPortadaOriginalUrl = null;
+      quitarImagenPortada = false;
+      cerrarEditores();
+      await cargarPortada();
+      setStatus($('mensajePortada'), 'Diapositiva actualizada. El catálogo ya puede mostrar el cambio.', 'success');
+    } catch (error) {
+      if (nuevaImagen?.path) {
+        await client.storage.from('catalog-media').remove([nuevaImagen.path]);
+      }
+      setStatus($('mensajeFormPortada'), mensajeError(error), 'error');
+    } finally {
+      $('btnGuardarPortada').disabled = false;
+    }
   }
 
   async function verificarAdmin(user) {
@@ -848,7 +1070,11 @@
     imagenProductoBlob = null;
     imagenProductoOriginalUrl = null;
     quitarImagenProducto = false;
-    [$('panelCategoria'), $('panelProducto')].forEach((panel) => {
+    revocarPreviewPortada();
+    imagenPortadaBlob = null;
+    imagenPortadaOriginalUrl = null;
+    quitarImagenPortada = false;
+    [$('panelCategoria'), $('panelProducto'), $('panelPortada')].forEach((panel) => {
       panel.classList.add('hidden');
       panel.setAttribute('aria-hidden', 'true');
     });
@@ -940,10 +1166,15 @@
   $('btnNuevoProducto').addEventListener('click', () => abrirProducto());
   $('formCategoria').addEventListener('submit', guardarCategoria);
   $('formProducto').addEventListener('submit', guardarProducto);
+  $('formPortada').addEventListener('submit', guardarPortada);
   $('btnTomarFoto').addEventListener('click', () => $('productoImagenCamara').click());
   $('btnElegirFoto').addEventListener('click', () => $('productoImagenGaleria').click());
   $('productoImagenCamara').addEventListener('change', (event) => seleccionarImagenProducto(event.target.files?.[0]));
   $('productoImagenGaleria').addEventListener('change', (event) => seleccionarImagenProducto(event.target.files?.[0]));
+  $('btnTomarFotoPortada').addEventListener('click', () => $('portadaImagenCamara').click());
+  $('btnElegirFotoPortada').addEventListener('click', () => $('portadaImagenGaleria').click());
+  $('portadaImagenCamara').addEventListener('change', (event) => seleccionarImagenPortada(event.target.files?.[0]));
+  $('portadaImagenGaleria').addEventListener('change', (event) => seleccionarImagenPortada(event.target.files?.[0]));
   $('btnQuitarFoto').addEventListener('click', () => {
     revocarPreviewTemporal();
     imagenProductoBlob = null;
@@ -954,6 +1185,20 @@
     setStatus(
       $('mensajeImagenProducto'),
       quitarImagenProducto ? 'La foto se quitará cuando guardes el producto.' : 'Foto seleccionada eliminada.',
+      ''
+    );
+  });
+
+  $('btnQuitarFotoPortada').addEventListener('click', () => {
+    revocarPreviewPortada();
+    imagenPortadaBlob = null;
+    quitarImagenPortada = Boolean(imagenPortadaOriginalUrl);
+    $('portadaImagenCamara').value = '';
+    $('portadaImagenGaleria').value = '';
+    pintarPreviewImagenPortada('');
+    setStatus(
+      $('mensajeImagenPortada'),
+      quitarImagenPortada ? 'La imagen se quitará cuando guardes los cambios.' : 'Imagen seleccionada eliminada.',
       ''
     );
   });
@@ -977,6 +1222,12 @@
     const catId = event.target.closest('[data-editar-categoria]')?.dataset.editarCategoria;
     if (catId) {
       abrirCategoria(catId);
+      return;
+    }
+
+    const portadaId = event.target.closest('[data-editar-portada]')?.dataset.editarPortada;
+    if (portadaId) {
+      abrirPortada(portadaId);
       return;
     }
 

@@ -22,7 +22,7 @@
   const menu = document.querySelector('#navegacion');
   const menuBtn = document.querySelector('#menuMovil');
   const modalLogo = document.querySelector('#modalLogo');
-  const portada = Array.isArray(window.PORTADA) ? window.PORTADA : [];
+  let portada = [];
   const carrusel = document.querySelector('#carruselPortada');
   const carruselPista = document.querySelector('#carruselPista');
   const carruselIndicadores = document.querySelector('#carruselIndicadores');
@@ -164,6 +164,18 @@
     }
   }
 
+  async function cargarPortada() {
+    try {
+      const filas = await consultaSupabase('carousel_slides?select=id,slot,title,description,image_url,button_text,button_url,active&active=eq.true&order=slot.asc');
+      portada = Array.isArray(filas) ? filas : [];
+      iniciarCarrusel(portada);
+    } catch (error) {
+      console.error('No se pudo cargar el carrusel desde Supabase:', error);
+      portada = [];
+      iniciarCarrusel(portada);
+    }
+  }
+
   function abrirModal(id) {
     const producto = productos.find(p => p.id === id);
     if (!producto) return;
@@ -246,30 +258,59 @@
     a.href = enlaceWhatsapp('Hola 🌸 Quiero saber qué piezas están disponibles para Jueves de Plantilocura.');
   });
 
-  function iniciarCarrusel() {
-    if (!carrusel || !carruselPista || portada.length === 0) return;
+  function hrefSeguro(valor) {
+    const href = String(valor || '').trim();
+    if (!href) return '#catalogo';
+    if (href === '#productos') return '#catalogo';
+    if (href.startsWith('#') || href.startsWith('/') || /^https?:\/\//i.test(href)) return href;
+    return '#catalogo';
+  }
+
+  function iniciarCarrusel(slides = []) {
+    if (!carrusel || !carruselPista) return;
+
+    if (!Array.isArray(slides) || slides.length === 0) {
+      carrusel.style.display = 'none';
+      return;
+    }
+    carrusel.style.display = '';
 
     let indice = 0;
     let temporizador = null;
     let inicioX = null;
+    const total = slides.length;
 
-    carruselPista.innerHTML = portada.map((item, i) => `
-      <article class="carrusel__slide" role="group" aria-roledescription="diapositiva" aria-label="${i + 1} de ${portada.length}: ${escapar(item.titulo)}">
-        <img class="carrusel__imagen" src="${escapar(item.imagen)}" alt="${escapar(item.titulo)}" ${i === 0 ? '' : 'loading="lazy"'}>
-        <div class="carrusel__capa">
-          <span class="carrusel__categoria">${escapar(item.categoria)}</span>
-          <strong class="carrusel__titulo">${escapar(item.titulo)}</strong>
-          <span class="carrusel__texto">${escapar(item.texto)}</span>
-        </div>
-      </article>`).join('');
+    carruselPista.innerHTML = slides.map((item, i) => {
+      const titulo = item.title || 'La Plantulera';
+      const imagen = item.image_url || 'img/branding/logo.webp';
+      const texto = item.description || '';
+      const boton = item.button_text || '';
+      const href = hrefSeguro(item.button_url);
+      const externo = /^https?:\/\//i.test(href);
 
-    carruselIndicadores.innerHTML = portada.map((item, i) => `
-      <button class="carrusel__punto${i === 0 ? ' activo' : ''}" type="button" data-carrusel-ir="${i}" aria-label="Ver ${escapar(item.titulo)}" aria-current="${i === 0 ? 'true' : 'false'}"></button>`).join('');
+      return `
+        <article class="carrusel__slide" role="group" aria-roledescription="diapositiva" aria-label="${i + 1} de ${total}: ${escapar(titulo)}">
+          <img class="carrusel__imagen" src="${escapar(imagen)}" alt="${escapar(titulo)}" ${i === 0 ? '' : 'loading="lazy"'}>
+          <div class="carrusel__capa">
+            <strong class="carrusel__titulo">${escapar(titulo)}</strong>
+            ${texto ? `<span class="carrusel__texto">${escapar(texto)}</span>` : ''}
+            ${boton ? `<a class="boton boton--dorado carrusel__boton" href="${escapar(href)}" ${externo ? 'target="_blank" rel="noopener"' : ''}>${escapar(boton)}</a>` : ''}
+          </div>
+        </article>`;
+    }).join('');
+
+    carruselIndicadores.innerHTML = slides.map((item, i) => `
+      <button class="carrusel__punto${i === 0 ? ' activo' : ''}" type="button" data-carrusel-ir="${i}" aria-label="Ver ${escapar(item.title || `diapositiva ${i + 1}`)}" aria-current="${i === 0 ? 'true' : 'false'}"></button>`).join('');
 
     const puntos = [...carruselIndicadores.querySelectorAll('[data-carrusel-ir]')];
 
+    const programar = () => {
+      if (temporizador) window.clearInterval(temporizador);
+      if (total > 1) temporizador = window.setInterval(() => mostrar(indice + 1, false), 5000);
+    };
+
     const mostrar = (nuevoIndice, reiniciar = true) => {
-      indice = (nuevoIndice + portada.length) % portada.length;
+      indice = (nuevoIndice + total) % total;
       carruselPista.style.transform = `translateX(-${indice * 100}%)`;
       puntos.forEach((punto, i) => {
         const activo = i === indice;
@@ -277,11 +318,6 @@
         punto.setAttribute('aria-current', activo ? 'true' : 'false');
       });
       if (reiniciar) programar();
-    };
-
-    const programar = () => {
-      if (temporizador) window.clearInterval(temporizador);
-      temporizador = window.setInterval(() => mostrar(indice + 1, false), 5000);
     };
 
     carrusel.querySelector('[data-carrusel-anterior]')?.addEventListener('click', () => mostrar(indice - 1));
@@ -314,6 +350,6 @@
     mostrar(0);
   }
 
-  iniciarCarrusel();
+  cargarPortada();
   cargarCatalogo();
 })();
