@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#F3E4E1">
   <title>La Plantulera | Regalos pintados con amor</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/estilos.css?v=0.7.1">
+  <link rel="stylesheet" href="css/estilos.css?v=0.7.2">
   <link rel="stylesheet" href="css/responsive.css?v=0.1.2">
 </head>
 <body>
@@ -199,6 +199,13 @@
     </div>
   </div>
 
+  <div class="modal-testimonio" id="modalTestimonio" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Imagen ampliada del testimonio">
+    <div class="modal-testimonio__panel">
+      <button class="modal-testimonio__cerrar" type="button" data-cerrar-testimonio aria-label="Cerrar imagen ampliada">&times;</button>
+      <img class="modal-testimonio__imagen" id="modalTestimonioImagen" src="" alt="">
+    </div>
+  </div>
+
   <div class="modal-logo" id="modalLogo" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalLogoTitulo">
     <div class="modal-logo__panel">
       <button class="modal-logo__cerrar" type="button" data-cerrar-logo aria-label="Cerrar logo ampliado">×</button>
@@ -211,6 +218,6 @@
   </div>
 
   <script src="js/config.js?v=0.6.0"></script>
-  <script src="js/app.js?v=0.7.1"></script>
+  <script src="js/app.js?v=0.7.2"></script>
 </body>
 </html>

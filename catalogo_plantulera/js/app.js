@@ -29,6 +29,8 @@
   const menu = document.querySelector('#navegacion');
   const menuBtn = document.querySelector('#menuMovil');
   const modalLogo = document.querySelector('#modalLogo');
+  const modalTestimonio = document.querySelector('#modalTestimonio');
+  const modalTestimonioImagen = document.querySelector('#modalTestimonioImagen');
   let portada = [];
   const carrusel = document.querySelector('#carruselPortada');
   const carruselPista = document.querySelector('#carruselPista');
@@ -183,9 +185,10 @@
     return `
       <article class="testimonio">
         ${foto ? `
-          <div class="testimonio__foto-wrap">
+          <button class="testimonio__foto-wrap" type="button" data-ver-testimonio-imagen="${escapar(foto)}" data-testimonio-nombre="${escapar(nombre)}" aria-label="Abrir imagen del testimonio de ${escapar(nombre)}">
             <img class="testimonio__foto" src="${escapar(foto)}" alt="Foto compartida por ${escapar(nombre)}" loading="lazy">
-          </div>` : ''}
+            <span class="testimonio__foto-ayuda" aria-hidden="true">Ver imagen</span>
+          </button>` : ''}
         <div class="testimonio__contenido">
           ${estrellasTestimonio(testimonio.rating)}
           <blockquote class="testimonio__comentario">“${escapar(comentario)}”</blockquote>
@@ -316,7 +319,7 @@
   function cerrarModal() {
     modal.classList.remove('abierto');
     modal.setAttribute('aria-hidden', 'true');
-    if (!modalLogo?.classList.contains('abierto')) document.body.classList.remove('modal-abierto');
+    if (!modalLogo?.classList.contains('abierto') && !modalTestimonio?.classList.contains('abierto')) document.body.classList.remove('modal-abierto');
   }
 
   function abrirLogo() {
@@ -331,7 +334,25 @@
     if (!modalLogo) return;
     modalLogo.classList.remove('abierto');
     modalLogo.setAttribute('aria-hidden', 'true');
-    if (!modal.classList.contains('abierto')) document.body.classList.remove('modal-abierto');
+    if (!modal.classList.contains('abierto') && !modalTestimonio?.classList.contains('abierto')) document.body.classList.remove('modal-abierto');
+  }
+
+  function abrirTestimonioImagen(src, nombre = '') {
+    if (!modalTestimonio || !modalTestimonioImagen || !src) return;
+    modalTestimonioImagen.src = src;
+    modalTestimonioImagen.alt = nombre ? `Testimonio compartido por ${nombre}` : 'Testimonio ampliado';
+    modalTestimonio.classList.add('abierto');
+    modalTestimonio.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-abierto');
+    modalTestimonio.querySelector('[data-cerrar-testimonio]')?.focus();
+  }
+
+  function cerrarTestimonioImagen() {
+    if (!modalTestimonio || !modalTestimonioImagen) return;
+    modalTestimonio.classList.remove('abierto');
+    modalTestimonio.setAttribute('aria-hidden', 'true');
+    modalTestimonioImagen.src = '';
+    if (!modal.classList.contains('abierto') && !modalLogo?.classList.contains('abierto')) document.body.classList.remove('modal-abierto');
   }
 
   categoriasCatalogo.addEventListener('click', (event) => {
@@ -350,15 +371,23 @@
       return;
     }
 
+    const verTestimonio = event.target.closest('[data-ver-testimonio-imagen]');
+    if (verTestimonio) {
+      abrirTestimonioImagen(verTestimonio.dataset.verTestimonioImagen, verTestimonio.dataset.testimonioNombre);
+      return;
+    }
+
     const ver = event.target.closest('[data-ver]');
     if (ver) abrirModal(ver.dataset.ver);
     if (event.target.matches('[data-cerrar-modal]') || event.target === modal) cerrarModal();
     if (event.target.matches('[data-cerrar-logo]') || event.target === modalLogo) cerrarLogo();
+    if (event.target.matches('[data-cerrar-testimonio]') || event.target === modalTestimonio) cerrarTestimonioImagen();
   });
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
-    if (modalLogo?.classList.contains('abierto')) cerrarLogo();
+    if (modalTestimonio?.classList.contains('abierto')) cerrarTestimonioImagen();
+    else if (modalLogo?.classList.contains('abierto')) cerrarLogo();
     else if (modal.classList.contains('abierto')) cerrarModal();
   });
 
