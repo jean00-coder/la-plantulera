@@ -97,7 +97,15 @@
 
   function esFlujoPassword() {
     const href = window.location.href;
-    return /type=(invite|recovery)/i.test(href) || /access_token=/i.test(window.location.hash);
+    const params = new URLSearchParams(window.location.search);
+    const mode = String(params.get('mode') || params.get('type') || '').toLowerCase();
+    const recoveryFlag = params.get('recovery');
+
+    return mode === 'recovery'
+      || mode === 'invite'
+      || recoveryFlag === '1'
+      || /type=(invite|recovery)/i.test(href)
+      || /access_token=/i.test(window.location.hash);
   }
 
   function slugify(valor) {
@@ -1254,8 +1262,11 @@
     }
 
     setStatus(msgLogin, 'Enviando enlace de recuperación...');
+    const redirectUrl = new URL(window.location.origin + window.location.pathname);
+    redirectUrl.searchParams.set('mode', 'recovery');
+
     const { error } = await client.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + window.location.pathname
+      redirectTo: redirectUrl.toString()
     });
 
     if (error) {
